@@ -1,13 +1,3 @@
-export type Service = {
-  id: string;
-  title: string;
-  description: string | null;
-  duration_mins: number;
-  price_cents: number;
-  active: boolean;
-  sort_order: number;
-  created_at: string;
-};
 
 export type AvailabilityRule = {
   id: string;
@@ -31,5 +21,17 @@ export type Booking = {
   vehicle: string | null;
   notes: string | null;
   status: "confirmed" | "cancelled";
+  created_at: string;
+};
+
+
+export type Service = {
+  id: string;
+  title: string;
+  description: string | null;
+  duration_mins: number;
+  price_cents: number;
+  active: boolean;
+  sort_order: number;
   created_at: string;
 };
