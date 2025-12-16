@@ -42,3 +42,8 @@ export function clsx(...xs: Array<string | false | null | undefined>) {
 export function fmtMoneyNZD(cents: number) {
   return new Intl.NumberFormat("en-NZ", { style: "currency", currency: "NZD" }).format(cents / 100);
 }
+
+export function fmtMoney(cents: number) {
+  const n = (cents ?? 0) / 100;
+  return n.toLocaleString("en-NZ", { style: "currency", currency: "NZD" });
+}

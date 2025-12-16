@@ -9,23 +9,26 @@ export type Service = {
   created_at: string;
 };
 
-export type Slot = {
+export type AvailabilityRule = {
   id: string;
-  start_at: string;
-  end_at: string;
-  is_available: boolean;
+  dow: number; // 0=Sun..6=Sat
+  start_time: string; // "08:00:00" etc
+  end_time: string;
+  effective_from: string; // YYYY-MM-DD
+  effective_to: string | null;
+  active: boolean;
   created_at: string;
 };
 
 export type Booking = {
   id: string;
-  slot_id: string;
   service_id: string;
+  start_at: string;
+  end_at: string;
   customer_name: string;
   customer_email: string;
   customer_phone: string | null;
   vehicle: string | null;
-  address: string | null;
   notes: string | null;
   status: "confirmed" | "cancelled";
   created_at: string;
