@@ -90,7 +90,6 @@ export default function Home() {
         <div className="min-w-0">
           <div className="flex flex-wrap gap-2">
             <Pill>Wellington</Pill>
-            <Pill>Studio drop-off</Pill>
             <Pill>Online booking</Pill>
           </div>
 
@@ -103,7 +102,7 @@ export default function Home() {
             Choose a service, pick a time that fits, and you’re done. Studio detailing for consistent results.
           </p>
 
-          <div className="mt-6 flex flex-col sm:flex-row gap-3">
+          <div className="mt-6 hidden sm:flex flex-col sm:flex-row gap-3">
             <Link to="/book" className="w-full sm:w-auto">
               <Button className="w-full rounded-2xl px-7 py-3 text-base">Book Online</Button>
             </Link>
@@ -349,67 +348,6 @@ export default function Home() {
               )}
             </Card>
           ))}
-        </div>
-      </section>
-
-      <section className="space-y-6">
-        <SectionTitle
-          eyebrow="Why DDS"
-          title="Designed to be easy"
-          desc="No back-and-forth messages — pick a service, choose a time, done."
-        />
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-3xl bg-white ring-1 ring-black/5 p-6 sm:p-8">
-            <div className="text-sm font-extrabold text-slate-900">What you’ll love</div>
-            <ul className="mt-4 space-y-3 text-sm text-slate-700">
-              <li className="flex gap-3">
-                <span className="mt-0.5 h-6 w-6 rounded-xl bg-slate-900 text-white grid place-items-center text-xs font-extrabold">✓</span>
-                <span>Only shows start times that fit the service duration.</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="mt-0.5 h-6 w-6 rounded-xl bg-slate-900 text-white grid place-items-center text-xs font-extrabold">✓</span>
-                <span>Clear pricing, no confusion.</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="mt-0.5 h-6 w-6 rounded-xl bg-slate-900 text-white grid place-items-center text-xs font-extrabold">✓</span>
-                <span>Bookings automatically block overlaps.</span>
-              </li>
-            </ul>
-
-            <div className="mt-6">
-              <Link to="/book">
-                <Button className="rounded-2xl px-6 py-3">Check availability</Button>
-              </Link>
-            </div>
-          </div>
-
-          <div className="rounded-3xl bg-slate-900 text-white ring-1 ring-white/10 p-6 sm:p-8 overflow-hidden">
-            <div className="text-sm font-extrabold">Location</div>
-            <p className="mt-3 text-sm text-white/80 max-w-prose">
-              Based in Wellington. Studio drop-off detailing — consistent quality in a controlled setup.
-              After booking, you’ll receive the studio details and next steps.
-            </p>
-
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl bg-white/10 ring-1 ring-white/10 p-4">
-                <div className="text-xs text-white/70">Service type</div>
-                <div className="text-sm font-extrabold">Studio only</div>
-              </div>
-              <div className="rounded-2xl bg-white/10 ring-1 ring-white/10 p-4">
-                <div className="text-xs text-white/70">Booking</div>
-                <div className="text-sm font-extrabold">Online</div>
-              </div>
-            </div>
-
-            <div className="mt-6">
-              <Link to="/services">
-                <Button variant="inverted" className="rounded-2xl px-6 py-3 ring-1 ring-white/15">
-                  View packages
-                </Button>
-              </Link>
-            </div>
-          </div>
         </div>
       </section>
 

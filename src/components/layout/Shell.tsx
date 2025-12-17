@@ -5,7 +5,11 @@ import { Button } from "../ui/Button";
 import { supabase } from "../../utils/supabase";
 
 function Container({ children }: { children: React.ReactNode }) {
-  return <div className="mx-auto w-full max-w-6xl px-4">{children}</div>;
+  return (
+    <div className="mx-auto w-full max-w-6xl px-4 min-w-0 overflow-x-clip">
+      {children}
+    </div>
+  );
 }
 
 function MenuCard({
@@ -82,6 +86,74 @@ export function Shell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
+  useEffect(() => {
+    if (!("ontouchstart" in window)) return;
+    let startX = 0;
+    let startY = 0;
+
+    function isInteractiveTarget(t: EventTarget | null) {
+      const el = t as HTMLElement | null;
+      if (!el) return false;
+      const tag = el.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || tag === "BUTTON";
+    }
+
+    const onStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    };
+
+    const onMove = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      if (isInteractiveTarget(e.target)) return;
+
+      const dx = e.touches[0].clientX - startX;
+      const dy = e.touches[0].clientY - startY;
+
+      // If user is mostly swiping horizontally, cancel to prevent sideways page panning.
+      if (Math.abs(dx) > Math.abs(dy) + 6) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener("touchstart", onStart, { passive: true });
+    window.addEventListener("touchmove", onMove, { passive: false });
+
+    return () => {
+      window.removeEventListener("touchstart", onStart);
+      window.removeEventListener("touchmove", onMove);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    const t = window.setTimeout(() => {
+      const vw = document.documentElement.clientWidth;
+      const offenders = Array.from(document.querySelectorAll("body *"))
+        .map((el) => ({ el, w: (el as HTMLElement).scrollWidth }))
+        .filter((x) => x.w > vw + 2)
+        .sort((a, b) => b.w - a.w)
+        .slice(0, 8)
+        .map((x) => {
+          const el = x.el as HTMLElement;
+          return {
+            width: x.w,
+            tag: el.tagName,
+            id: el.id,
+            className: el.className,
+          };
+        });
+
+      if (offenders.length) {
+        // eslint-disable-next-line no-console
+        console.table(offenders);
+      }
+    }, 300);
+
+    return () => window.clearTimeout(t);
+  }, [location.pathname, open]);
+
   // Admin status
   useEffect(() => {
     let mounted = true;
@@ -123,7 +195,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     !open && !location.pathname.startsWith("/admin") && location.pathname !== "/book";
 
   return (
-    <div className="min-h-dvh bg-[#f7f7f8] overflow-x-hidden">
+    <div className="min-h-dvh bg-[#f7f7f8] overflow-x-clip">
       {/* HEADER */}
       <header className="sticky top-0 z-40 bg-[#f7f7f8]/90 backdrop-blur">
         <div className="border-b border-black/5">
@@ -227,7 +299,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       {/* ✅ FULLSCREEN MOBILE MENU (only rendered when open) */}
       {open && (
         <div
-          className="fixed inset-0 z-[9999] md:hidden"
+          className="fixed inset-0 z-[9999] md:hidden overflow-hidden"
           role="dialog"
           aria-modal="true"
         >
@@ -240,7 +312,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
           {/* Sheet */}
           <div
-            className="absolute inset-0 h-[100dvh] w-full"
+            className="absolute inset-0 h-[100dvh] w-full overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Background polish */}
