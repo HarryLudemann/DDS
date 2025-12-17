@@ -65,10 +65,10 @@ export default function Services() {
               </div>
 
               <div className="mt-auto flex gap-3">
-                <Link to="/book" className="w-full">
+                <Link to={`/book?service=${encodeURIComponent(s.id)}`} className="w-full">
                   <Button className="w-full">Book this</Button>
                 </Link>
-                <Link to="/book" className="w-full">
+                <Link to={`/book?service=${encodeURIComponent(s.id)}`} className="w-full">
                   <Button variant="secondary" className="w-full">Choose time</Button>
                 </Link>
               </div>

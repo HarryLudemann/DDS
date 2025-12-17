@@ -16,3 +16,12 @@ body{
   background: #f7f7f8;
   color: #0f172a;
 }
+
+html, body, #root {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  overscroll-behavior-x: none;
+}

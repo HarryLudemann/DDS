@@ -119,6 +119,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   }
 
+  const showMobileCta =
+    !open && !location.pathname.startsWith("/admin") && location.pathname !== "/book";
+
   return (
     <div className="min-h-dvh bg-[#f7f7f8] overflow-x-hidden">
       {/* HEADER */}
@@ -187,9 +190,29 @@ export function Shell({ children }: { children: React.ReactNode }) {
       {/* MAIN */}
       <main>
         <Container>
-          <div className="py-10 sm:py-12 md:py-16 min-w-0">{children}</div>
+          <div
+            className={clsx(
+              "py-10 sm:py-12 md:py-16 min-w-0",
+              showMobileCta ? "pb-28" : ""
+            )}
+          >
+            {children}
+          </div>
         </Container>
       </main>
+
+      {showMobileCta && (
+        <div className="fixed inset-x-0 bottom-0 z-30 md:hidden">
+          <div className="pointer-events-none absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-[#f7f7f8] to-transparent" />
+          <div className="bg-[#f7f7f8]/95 backdrop-blur border-t border-black/5 px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
+            <div className="mx-auto max-w-6xl">
+              <Link to="/book" className="block">
+                <Button className="w-full py-3 text-base rounded-2xl">Book Online</Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* FOOTER */}
       <footer className="py-10 text-sm text-slate-500">

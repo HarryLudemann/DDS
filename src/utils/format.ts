@@ -47,3 +47,12 @@ export function fmtMoney(cents: number) {
   const n = (cents ?? 0) / 100;
   return n.toLocaleString("en-NZ", { style: "currency", currency: "NZD" });
 }
+
+export function fmtDuration(mins: number) {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+
+  if (h === 0) return `${m} min`;
+  if (m === 0) return `${h} hr`;
+  return `${h} hr ${m} min`;
+}

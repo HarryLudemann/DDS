@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "../../utils/supabase";
-import { fmtDayNZ, fmtTimeNZ } from "../../utils/format";
+import { fmtDayNZ, fmtTimeNZ, NZ_TZ } from "../../utils/format";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
@@ -15,11 +16,15 @@ function addDays(d: Date, days: number) {
   x.setDate(x.getDate() + days);
   return x;
 }
-function toISODate(d: Date) {
-  return d.toISOString().slice(0, 10);
+
+function toISODateNZ(d: Date) {
+  // Important: availability is configured in NZ time.
+  // Using UTC date strings can shift the day-of-week near midnight and show unexpected days.
+  return new Intl.DateTimeFormat("en-CA", { timeZone: NZ_TZ }).format(d); // YYYY-MM-DD
 }
 
 export default function Book() {
+  const [searchParams] = useSearchParams();
   const [services, setServices] = useState<Service[]>([]);
   const [times, setTimes] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,6 +39,7 @@ export default function Book() {
   const [notes, setNotes] = useState("");
 
   const [status, setStatus] = useState<string | null>(null);
+  const [statusTone, setStatusTone] = useState<"success" | "error" | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -49,6 +55,13 @@ export default function Book() {
   }, []);
 
   useEffect(() => {
+    const preselect = searchParams.get("service");
+    if (!preselect) return;
+    if (!services.some((s) => s.id === preselect)) return;
+    setServiceId(preselect);
+  }, [searchParams, services]);
+
+  useEffect(() => {
     if (!serviceId) {
       setTimes([]);
       setStartAt("");
@@ -57,6 +70,7 @@ export default function Book() {
 
     (async () => {
       setStatus(null);
+      setStatusTone(null);
       setTimes([]);
       setStartAt("");
 
@@ -65,8 +79,8 @@ export default function Book() {
 
       const { data, error } = await supabase.rpc("get_available_starts", {
         p_service_id: serviceId,
-        p_from: toISODate(from),
-        p_to: toISODate(to),
+        p_from: toISODateNZ(from),
+        p_to: toISODateNZ(to),
         p_step_mins: 15,
       });
 
@@ -86,10 +100,12 @@ export default function Book() {
     return [...map.values()];
   }, [times]);
 
-  const canSubmit = serviceId && startAt && name.trim() && email.trim();
+  const canSubmit =
+    serviceId && startAt && name.trim() && email.trim() && statusTone !== "success";
 
   async function submit() {
     setStatus(null);
+    setStatusTone(null);
     if (!canSubmit) return;
 
     setSubmitting(true);
@@ -105,8 +121,13 @@ export default function Book() {
     });
     setSubmitting(false);
 
-    if (error) setStatus(error.message);
-    else setStatus("Booking confirmed — Dylan will contact you shortly to confirm details.");
+    if (error) {
+      setStatusTone("error");
+      setStatus(error.message);
+    } else {
+      setStatusTone("success");
+      setStatus("Booking confirmed — Dylan will contact you shortly to confirm details.");
+    }
   }
 
   return (
@@ -173,23 +194,92 @@ export default function Book() {
               )}
             </div>
 
-            {status && <div className="text-sm text-slate-600">{status}</div>}
+            {status && (
+              <div
+                className={[
+                  "rounded-2xl ring-1 p-4 text-sm",
+                  statusTone === "success"
+                    ? "bg-emerald-50 text-emerald-900 ring-emerald-200"
+                    : statusTone === "error"
+                    ? "bg-rose-50 text-rose-900 ring-rose-200"
+                    : "bg-slate-50 text-slate-700 ring-black/5",
+                ].join(" ")}
+              >
+                {status}
+              </div>
+            )}
           </Card>
 
           <Card className="space-y-5">
             <div className="text-sm font-extrabold text-slate-900">3) Your details</div>
 
             <div className="grid gap-3">
-              <Input placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} />
-              <Input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
-              <Input placeholder="Phone (optional)" value={phone} onChange={(e) => setPhone(e.target.value)} />
-              <Input placeholder="Vehicle (optional)" value={vehicle} onChange={(e) => setVehicle(e.target.value)} />
-              <Input placeholder="Notes (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} />
+              <div className="grid gap-1">
+                <label className="text-xs font-semibold text-slate-700">Full name</label>
+                <Input
+                  placeholder="e.g. Sam Taylor"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  autoComplete="name"
+                />
+              </div>
+
+              <div className="grid gap-1">
+                <label className="text-xs font-semibold text-slate-700">Email</label>
+                <Input
+                  type="email"
+                  inputMode="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                />
+              </div>
+
+              <div className="grid gap-1">
+                <label className="text-xs font-semibold text-slate-700">Phone</label>
+                <Input
+                  type="tel"
+                  inputMode="tel"
+                  placeholder="021 123 4567"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  autoComplete="tel"
+                />
+              </div>
+
+              <div className="grid gap-1">
+                <label className="text-xs font-semibold text-slate-700">Vehicle</label>
+                <Input
+                  placeholder="e.g. 2017 Mazda Axela"
+                  value={vehicle}
+                  onChange={(e) => setVehicle(e.target.value)}
+                  autoComplete="off"
+                />
+              </div>
+
+              <div className="grid gap-1">
+                <label className="text-xs font-semibold text-slate-700">Notes (optional)</label>
+                <Input
+                  placeholder="Any areas to focus on?"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  autoComplete="off"
+                />
+              </div>
             </div>
 
             <Button disabled={!canSubmit || submitting} onClick={submit} className="w-full">
-              {submitting ? "Confirming…" : "Confirm booking"}
+              {statusTone === "success"
+                ? "Booked"
+                : submitting
+                ? "Confirming…"
+                : "Confirm booking"}
             </Button>
+
+            <div className="text-xs text-slate-500">
+              By booking you agree to be contacted about your appointment.
+            </div>
           </Card>
         </div>
       )}
