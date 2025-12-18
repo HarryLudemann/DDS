@@ -192,7 +192,7 @@ export default function Home() {
               key={x.title}
               type="button"
               onClick={() => setActiveResult(x)}
-              className="rounded-3xl bg-white overflow-hidden text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus-visible:ring-4 focus-visible:ring-indigo-200"
+              className="rounded-3xl bg-white overflow-hidden text-left border-0 shadow-none transition-transform hover:scale-[1.01] focus:outline-none focus-visible:ring-4 focus-visible:ring-indigo-200"
             >
               <div className="relative aspect-[4/3] bg-slate-100">
                 <img
