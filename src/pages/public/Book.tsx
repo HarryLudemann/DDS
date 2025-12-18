@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "../../utils/supabase";
 import { fmtDayNZ, fmtTimeNZ, NZ_TZ } from "../../utils/format";
 import { Card } from "../../components/ui/Card";
@@ -23,12 +23,28 @@ function toISODateNZ(d: Date) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: NZ_TZ }).format(d); // YYYY-MM-DD
 }
 
+function addMinutesIso(iso: string, mins: number): string | null {
+  const d = new Date(iso);
+  if (!Number.isFinite(d.getTime())) return null;
+  return new Date(d.getTime() + mins * 60_000).toISOString();
+}
+
 export default function Book() {
   const [searchParams] = useSearchParams();
   const [services, setServices] = useState<Service[]>([]);
   const [times, setTimes] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingTimes, setLoadingTimes] = useState(false);
+  const [timesNonce, setTimesNonce] = useState(0);
+
+  const debug = searchParams.get("debug") === "1";
+  const [debugInfo, setDebugInfo] = useState<{
+    serviceId?: string;
+    fromNZ?: string;
+    toNZ?: string;
+    rpcCount?: number;
+    rpcError?: string | null;
+  } | null>(null);
 
   const [serviceId, setServiceId] = useState("");
   const [startAt, setStartAt] = useState("");
@@ -66,6 +82,7 @@ export default function Book() {
     if (!serviceId) {
       setTimes([]);
       setStartAt("");
+      setDebugInfo(null);
       return;
     }
 
@@ -79,16 +96,32 @@ export default function Book() {
       setLoadingTimes(true);
 
       const from = new Date();
-      const to = addDays(from, 21);
+      // Give the backend a slightly wider range to avoid edge cases around date boundaries.
+      const to = addDays(from, 22);
+
+      const fromNZ = toISODateNZ(from);
+      const toNZ = toISODateNZ(to);
 
       const { data, error } = await supabase.rpc("get_available_starts", {
         p_service_id: serviceId,
-        p_from: toISODateNZ(from),
-        p_to: toISODateNZ(to),
+        p_from: fromNZ,
+        p_to: toNZ,
         p_step_mins: 15,
       });
 
       if (cancelled) return;
+
+      setDebugInfo(
+        debug
+          ? {
+              serviceId,
+              fromNZ,
+              toNZ,
+              rpcCount: Array.isArray(data) ? data.length : 0,
+              rpcError: error ? error.message : null,
+            }
+          : null
+      );
 
       if (error) {
         setStatusTone("error");
@@ -104,7 +137,7 @@ export default function Book() {
     return () => {
       cancelled = true;
     };
-  }, [serviceId]);
+  }, [serviceId, timesNonce, debug]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, DayGroup>();
@@ -125,10 +158,25 @@ export default function Book() {
     setStatusTone(null);
     if (!canSubmit) return;
 
+    const svc = services.find((s) => s.id === serviceId);
+    if (!svc) {
+      setStatusTone("error");
+      setStatus("Please select a service.");
+      return;
+    }
+
+    const endAt = addMinutesIso(startAt, svc.duration_mins);
+    if (!endAt) {
+      setStatusTone("error");
+      setStatus("Selected time is invalid. Please choose another time.");
+      return;
+    }
+
     setSubmitting(true);
     const { error } = await supabase.from("bookings").insert({
       service_id: serviceId,
       start_at: startAt,
+      end_at: endAt,
       customer_name: name.trim(),
       customer_email: email.trim(),
       customer_phone: phone.trim() || null,
@@ -144,6 +192,7 @@ export default function Book() {
     } else {
       setStatusTone("success");
       setStatus("Booking confirmed — Dylan will contact you shortly to confirm details.");
+      setTimes((prev) => prev.filter((t) => t !== startAt));
     }
   }
 
@@ -183,7 +232,15 @@ export default function Book() {
                 </div>
               ) : grouped.length === 0 ? (
                 <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600 ring-1 ring-black/5">
-                  No available times in the next 3 weeks. Try again later.
+                  <div>No available times in the next 3 weeks.</div>
+                  <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                    <Button variant="secondary" onClick={() => setTimesNonce((x) => x + 1)}>
+                      Refresh
+                    </Button>
+                    <Link to="/services" className="w-full sm:w-auto">
+                      <Button variant="ghost" className="w-full sm:w-auto">View services</Button>
+                    </Link>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-4 max-h-[520px] overflow-auto pr-1">
@@ -227,6 +284,19 @@ export default function Book() {
                 ].join(" ")}
               >
                 {status}
+              </div>
+            )}
+
+            {debug && debugInfo && (
+              <div className="rounded-2xl bg-white ring-1 ring-black/10 p-4 text-xs text-slate-700">
+                <div className="font-extrabold text-slate-900">Debug</div>
+                <div className="mt-2 grid gap-1">
+                  <div>service: {debugInfo.serviceId}</div>
+                  <div>fromNZ: {debugInfo.fromNZ}</div>
+                  <div>toNZ: {debugInfo.toNZ}</div>
+                  <div>rpcCount: {debugInfo.rpcCount}</div>
+                  <div>rpcError: {debugInfo.rpcError ?? "(none)"}</div>
+                </div>
               </div>
             )}
           </Card>

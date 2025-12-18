@@ -63,17 +63,6 @@ function Pill({ children }: { children: React.ReactNode }) {
   );
 }
 
-function CheckItem({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex items-start gap-2">
-      <div className="mt-0.5 h-6 w-6 shrink-0 rounded-xl bg-indigo-600/10 text-indigo-700 ring-1 ring-indigo-600/15 grid place-items-center text-xs font-extrabold">
-        ✓
-      </div>
-      <div className="text-sm text-slate-700">{children}</div>
-    </div>
-  );
-}
-
 export default function Home() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
@@ -111,99 +100,77 @@ export default function Home() {
 
   return (
     <div className="space-y-16 sm:space-y-20">
-      <section className="grid gap-6 lg:grid-cols-2 items-start">
-        <div className="min-w-0">
-          <div className="flex flex-wrap gap-2">
-            <Pill>Wellington</Pill>
-            <Pill>Online booking</Pill>
-          </div>
+      <section className="relative overflow-hidden rounded-3xl bg-white ring-1 ring-black/5">
+        <div className="absolute -top-24 -right-24 h-80 w-80 rounded-full bg-indigo-600/10 blur-2xl" />
+        <div className="absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-slate-900/5 blur-2xl" />
 
-          <h1 className="mt-6 text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900">
-            Professional car detailing.
-            <span className="block text-indigo-600">Book online in minutes.</span>
-          </h1>
+        <div className="relative p-6 sm:p-10">
+          <div className="grid gap-8 lg:grid-cols-12 lg:items-center">
+            <div className="lg:col-span-7 min-w-0">
+              <div className="flex flex-wrap gap-2">
+                <Pill>Wellington</Pill>
+                <Pill>Studio drop-off</Pill>
+                <Pill>Book online</Pill>
+              </div>
 
-          <p className="mt-4 text-base sm:text-lg text-slate-600 max-w-prose">
-            Choose a service, pick a time that fits, and you’re done. Studio detailing for consistent results.
-          </p>
+              <h1 className="mt-6 text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900">
+                Studio-grade detailing.
+                <span className="block text-indigo-600">A cleaner car, without the guesswork.</span>
+              </h1>
 
-          <div className="mt-6 flex flex-col sm:flex-row gap-3">
-            <Link to="/book" className="w-full sm:w-auto">
-              <Button className="w-full rounded-2xl px-7 py-3 text-base">Book Online</Button>
-            </Link>
-            <Link to="/services" className="w-full sm:w-auto">
-              <Button variant="secondary" className="w-full rounded-2xl px-7 py-3 text-base">
-                View packages
-              </Button>
-            </Link>
-          </div>
-        </div>
+              <p className="mt-4 text-base sm:text-lg text-slate-600 max-w-prose">
+                Choose a package, pick an available time, and you’re locked in. Add notes for any priority areas — Dylan confirms details after booking.
+              </p>
 
-        <div className="rounded-3xl bg-slate-900 text-white ring-1 ring-white/10 p-6 sm:p-8 overflow-hidden">
-          <div className="text-sm font-extrabold">How it works</div>
-          <div className="mt-4 grid gap-3">
-            <div className="rounded-2xl bg-white/10 ring-1 ring-white/10 p-4">
-              <div className="text-sm font-extrabold">1) Choose a service</div>
-              <div className="text-sm text-white/75 mt-1">Clear pricing and duration.</div>
-            </div>
-            <div className="rounded-2xl bg-white/10 ring-1 ring-white/10 p-4">
-              <div className="text-sm font-extrabold">2) Pick a time</div>
-              <div className="text-sm text-white/75 mt-1">Only valid start times are shown.</div>
-            </div>
-            <div className="rounded-2xl bg-white/10 ring-1 ring-white/10 p-4">
-              <div className="text-sm font-extrabold">3) Confirm details</div>
-              <div className="text-sm text-white/75 mt-1">You’re locked in — no overlaps.</div>
-            </div>
-          </div>
-
-          <div className="mt-6">
-            <Link to="/book">
-              <Button variant="inverted" className="w-full py-3 text-base rounded-2xl ring-1 ring-white/15">
-                Book now
-              </Button>
-            </Link>
-          </div>
-        </div>
-
-        <div className="lg:col-span-2 mt-2 grid gap-3 sm:grid-cols-3">
-          <Feature title="Studio detailing" desc="No mobile service — consistent results in a controlled setup." />
-          <Feature title="Real-time availability" desc="Bookings automatically remove conflicting times." />
-          <Feature title="Clear packages" desc="Know the price and duration before you book." />
-        </div>
-      </section>
-
-      <section className="space-y-6">
-        <SectionTitle
-          eyebrow="Why DDS"
-          title="A careful process, not a quick wash"
-          desc="The goal is simple: consistent results and clear communication, every time you book."
-        />
-
-        <div className="grid gap-4 md:grid-cols-3">
-          {[ 
-            {
-              t: "Detail-first workflow",
-              d: "We focus on the high-impact areas, then do a final pass to catch the little things people notice.",
-            },
-            {
-              t: "Studio setup",
-              d: "Controlled lighting and environment helps produce a more consistent finish than rushing outdoors.",
-            },
-            {
-              t: "No surprises",
-              d: "Clear packages and durations up front. Add notes when booking and Dylan will confirm details after.",
-            },
-          ].map((x) => (
-            <div key={x.t} className="rounded-3xl bg-white p-6">
-              <div className="text-sm font-extrabold tracking-tight text-slate-900">{x.t}</div>
-              <div className="mt-2 text-sm text-slate-600">{x.d}</div>
-              <div className="mt-4">
-                <Link to="/book">
-                  <Button variant="secondary" className="rounded-2xl px-5 py-2.5">Check times</Button>
+              <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                <Link to="/book" className="w-full sm:w-auto">
+                  <Button className="w-full rounded-2xl px-7 py-3 text-base">Check times</Button>
+                </Link>
+                <Link to="/services" className="w-full sm:w-auto">
+                  <Button variant="secondary" className="w-full rounded-2xl px-7 py-3 text-base">See prices</Button>
                 </Link>
               </div>
+
+              <div className="mt-4 text-xs text-slate-500">
+                Live availability · No back-and-forth · Confirmation after booking
+              </div>
             </div>
-          ))}
+
+            <div className="lg:col-span-5">
+              <div className="rounded-3xl bg-slate-900 text-white p-6 sm:p-7">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-xs font-semibold tracking-wider uppercase text-white/70">How it works</div>
+                    <div className="mt-2 text-xl font-extrabold tracking-tight">3 steps. No overlap.</div>
+                  </div>
+                  <div className="shrink-0 rounded-2xl bg-white/10 ring-1 ring-white/15 px-3 py-2 text-xs font-extrabold">
+                    DDS
+                  </div>
+                </div>
+
+                <div className="mt-5 grid gap-3">
+                  <div className="rounded-2xl bg-white/10 ring-1 ring-white/10 p-4">
+                    <div className="text-sm font-extrabold">1) Pick a package</div>
+                    <div className="mt-1 text-sm text-white/80">Clear inclusions.</div>
+                  </div>
+                  <div className="rounded-2xl bg-white/10 ring-1 ring-white/10 p-4">
+                    <div className="text-sm font-extrabold">2) Choose a time</div>
+                    <div className="mt-1 text-sm text-white/80">Only valid starts show.</div>
+                  </div>
+                  <div className="rounded-2xl bg-white/10 ring-1 ring-white/10 p-4">
+                    <div className="text-sm font-extrabold">3) Drop off</div>
+                    <div className="mt-1 text-sm text-white/80">Notes welcome — we confirm after.</div>
+                  </div>
+                </div>
+
+                <div className="mt-5 flex flex-col sm:flex-row gap-2">
+                  <Link to="/book" className="w-full">
+                    <Button variant="inverted" className="w-full rounded-2xl px-6 py-3 ring-1 ring-white/15">Book online</Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -325,40 +292,49 @@ export default function Home() {
         </div>
 
         <div className="pt-2 relative z-10">
-          <Link to="/services" className="inline-block relative z-10">
-            <Button variant="secondary" className="rounded-2xl px-6 py-3">
-              See what’s included
-            </Button>
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Link to="/book" className="inline-block relative z-10">
+              <Button className="rounded-2xl px-6 py-3">Check times</Button>
+            </Link>
+            <Link to="/services" className="inline-block relative z-10">
+              <Button variant="secondary" className="rounded-2xl px-6 py-3">
+                See what’s included
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
       <section className="space-y-6">
         <SectionTitle
-          eyebrow="Standards"
-          title="Built to be reliable"
-          desc="DDS is a new business — the goal is to earn trust through clear communication and consistent results."
+          eyebrow="Why DDS"
+          title="Detailing that’s built to be consistent"
+          desc="DDS is studio drop-off only in Wellington. The focus is simple: clear packages, careful work, and tidy finishing — without the back-and-forth."
         />
 
-        <div className="grid gap-4 md:grid-cols-3">
-          {[
+        <div className="grid gap-4 md:grid-cols-2">
+          {[ 
             {
-              t: "Clear expectations",
-              d: "Straightforward packages with clear duration and pricing up front.",
+              t: "Clear packages, clear outcomes",
+              d: "Pricing and inclusions are laid out up front so you know what you’re booking before you choose a time.",
             },
             {
-              t: "Careful, studio-only workflow",
-              d: "A controlled setup for consistent quality, lighting and product application.",
+              t: "Careful workflow + tidy finishing",
+              d: "We focus on the areas that change the look and feel most, then do a final pass to catch the small details.",
             },
             {
-              t: "Quality check before handover",
-              d: "A simple checklist to make sure the essentials are done properly every time.",
+              t: "Studio setup",
+              d: "A controlled environment and lighting helps keep results consistent and avoids rushing around the weather.",
+            },
+            {
+              t: "Simple communication",
+              d: "Add notes when you book. Dylan confirms details after booking so expectations are aligned before drop-off.",
             },
           ].map((x) => (
             <div key={x.t} className="rounded-3xl bg-white ring-1 ring-black/5 p-6">
               <div className="flex items-start gap-3">
-                <div className="mt-0.5 h-10 w-10 rounded-2xl bg-indigo-600/10 text-indigo-700 ring-1 ring-indigo-600/15 grid place-items-center font-extrabold">
-                  ✓
+                <div className="mt-0.5 h-10 w-10 rounded-2xl bg-indigo-600/10 text-indigo-700 ring-1 ring-indigo-600/15 grid place-items-center text-sm font-extrabold">
+                  {x.t.split(" ")[0].slice(0, 1)}
                 </div>
                 <div className="min-w-0">
                   <div className="text-sm font-extrabold tracking-tight text-slate-900">{x.t}</div>
@@ -369,64 +345,22 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="rounded-3xl bg-white ring-1 ring-black/5 p-6 sm:p-8">
+        <div className="rounded-3xl bg-slate-900 text-white p-6 sm:p-8 overflow-hidden">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="min-w-0">
-              <div className="text-sm font-extrabold tracking-tight text-slate-900">Not sure what to book?</div>
-              <p className="mt-2 text-sm text-slate-600 max-w-prose">
-                Start with a package that matches your car’s condition — you can add notes and Dylan will confirm details.
+              <div className="text-sm font-extrabold">Not sure what to book?</div>
+              <p className="mt-2 text-sm text-white/80 max-w-prose">
+                Start with the closest package — leave notes about any priority areas. Dylan will confirm details after booking.
               </p>
             </div>
             <div className="shrink-0 w-full md:w-auto flex flex-col sm:flex-row gap-2">
               <Link to="/services" className="w-full md:w-auto">
-                <Button variant="secondary" className="w-full md:w-auto rounded-2xl px-6 py-3">
-                  See packages
+                <Button variant="inverted" className="w-full md:w-auto rounded-2xl px-6 py-3 ring-1 ring-white/15">
+                  See prices
                 </Button>
               </Link>
               <Link to="/book" className="w-full md:w-auto">
-                <Button className="w-full md:w-auto rounded-2xl px-6 py-3">Check availability</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="space-y-6">
-        <SectionTitle
-          eyebrow="Booking"
-          title="A simple process"
-          desc="Pick a package, choose a time that fits, and you’re locked in."
-        />
-
-        <div className="grid gap-4 md:grid-cols-3">
-          {[
-            { t: "Choose a service", d: "Clear pricing and duration." },
-            { t: "Pick an available time", d: "Only valid start times shown." },
-            { t: "Drop off at the studio", d: "You’ll receive details after booking." },
-          ].map((x) => (
-            <div key={x.t} className="rounded-3xl bg-white ring-1 ring-black/5 p-6">
-              <div className="text-sm font-extrabold tracking-tight text-slate-900">{x.t}</div>
-              <div className="mt-2 text-sm text-slate-600">{x.d}</div>
-            </div>
-          ))}
-        </div>
-
-        <div className="rounded-3xl bg-slate-900 text-white ring-1 ring-white/10 p-6 sm:p-8 overflow-hidden">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div className="min-w-0">
-              <div className="text-sm font-extrabold">Ready to book?</div>
-              <div className="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight">
-                Secure a time that fits — no back-and-forth.
-              </div>
-              <p className="mt-3 text-sm text-white/80 max-w-prose">
-                Choose a package first and the booking system will only show start times that can actually fit the job.
-              </p>
-            </div>
-            <div className="shrink-0 w-full md:w-auto">
-              <Link to="/book" className="block">
-                <Button variant="inverted" className="w-full md:w-auto rounded-2xl px-7 py-3 text-base ring-1 ring-white/15">
-                  Book online
-                </Button>
+                <Button className="w-full md:w-auto rounded-2xl px-6 py-3">Check times</Button>
               </Link>
             </div>
           </div>
@@ -530,87 +464,108 @@ export default function Home() {
             className="absolute inset-0 bg-black/40"
           />
 
-          <div className="absolute inset-0 flex items-center justify-center p-4">
-            <div className="w-full max-w-xl overflow-hidden rounded-3xl bg-white shadow-2xl">
-              <div className="relative aspect-[16/10] bg-slate-100">
-                <img
-                  src={activeResult.src}
-                  alt={activeResult.alt}
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-              </div>
+          <div className="absolute inset-0 flex items-center justify-center p-3 sm:p-6">
+            <div className="relative w-full max-w-5xl overflow-hidden rounded-3xl bg-white shadow-2xl">
+              <button
+                type="button"
+                aria-label="Close"
+                onClick={() => setActiveResult(null)}
+                className="absolute right-3 top-3 z-10 rounded-xl bg-white/90 px-3 py-2 text-slate-700 ring-1 ring-black/10 hover:bg-white"
+              >
+                <span className="sr-only">Close</span>
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M6 6l12 12" />
+                  <path d="M18 6L6 18" />
+                </svg>
+              </button>
 
-              <div className="p-6 sm:p-7">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <div className="text-xl font-extrabold tracking-tight text-slate-900">
-                      {activeResult.title}
-                    </div>
-                    <div className="mt-1 text-sm font-semibold text-slate-600">{activeResult.sub}</div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setActiveResult(null)}
-                    className="shrink-0 rounded-xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 ring-1 ring-black/5 hover:bg-slate-200"
-                  >
-                    Close
-                  </button>
-                </div>
-
-                <p className="mt-4 text-sm text-slate-600">{activeResult.desc}</p>
-
-                <div className="mt-5 grid gap-5 sm:grid-cols-2">
-                  <div className="space-y-3">
-                    <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500">Highlights</div>
-                    <div className="grid gap-2">
-                      {activeResult.highlights.map((h) => (
-                        <CheckItem key={h}>{h}</CheckItem>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500">Ideal for</div>
-                    <div className="grid gap-2">
-                      {activeResult.idealFor.map((h) => (
-                        <CheckItem key={h}>{h}</CheckItem>
-                      ))}
+              <div className="grid lg:grid-cols-12">
+                <div className="lg:col-span-5">
+                  <div className="relative h-56 sm:h-72 lg:h-full lg:min-h-[640px] bg-slate-100">
+                    <img
+                      src={activeResult.src}
+                      alt={activeResult.alt}
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/0 to-black/0" />
+                    <div className="absolute bottom-4 left-4 right-14">
+                      <div className="text-white">
+                        <div className="text-lg font-extrabold tracking-tight">{activeResult.title}</div>
+                        <div className="mt-1 text-sm text-white/80">{activeResult.sub}</div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-6 rounded-2xl bg-slate-50 ring-1 ring-black/5 p-5">
-                  <div className="text-sm font-extrabold tracking-tight text-slate-900">What’s included</div>
-                  <div className="mt-3 grid gap-2">
-                    {activeResult.includes.map((h) => (
-                      <CheckItem key={h}>{h}</CheckItem>
-                    ))}
+                <div className="lg:col-span-7">
+                  <div className="max-h-[72vh] lg:max-h-[640px] overflow-y-auto p-5 sm:p-7">
+                    <div className="flex flex-wrap gap-2">
+                      <span className="inline-flex items-center rounded-full bg-indigo-600/10 text-indigo-700 ring-1 ring-indigo-600/15 px-3 py-1 text-xs font-semibold">
+                        Studio drop-off
+                      </span>
+                      <span className="inline-flex items-center rounded-full bg-slate-100 text-slate-700 ring-1 ring-black/5 px-3 py-1 text-xs font-semibold">
+                        Wellington
+                      </span>
+                      <span className="inline-flex items-center rounded-full bg-slate-100 text-slate-700 ring-1 ring-black/5 px-3 py-1 text-xs font-semibold">
+                        Live availability
+                      </span>
+                    </div>
+
+                    <p className="mt-4 text-sm text-slate-600">{activeResult.desc}</p>
+
+                    <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                      <div className="rounded-2xl bg-white ring-1 ring-black/5 p-5">
+                        <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500">Highlights</div>
+                        <ul className="mt-3 space-y-2 list-disc pl-5 text-sm text-slate-700 marker:text-indigo-400">
+                          {activeResult.highlights.map((h) => (
+                            <li key={h}>{h}</li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className="rounded-2xl bg-white ring-1 ring-black/5 p-5">
+                        <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500">Ideal for</div>
+                        <ul className="mt-3 space-y-2 list-disc pl-5 text-sm text-slate-700 marker:text-indigo-400">
+                          {activeResult.idealFor.map((h) => (
+                            <li key={h}>{h}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 rounded-2xl bg-slate-50 ring-1 ring-black/5 p-5">
+                      <div className="text-sm font-extrabold tracking-tight text-slate-900">What’s included</div>
+                      <ul className="mt-3 space-y-2 list-disc pl-5 text-sm text-slate-700 marker:text-indigo-400">
+                        {activeResult.includes.map((h) => (
+                          <li key={h}>{h}</li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="mt-6 rounded-2xl bg-white ring-1 ring-black/5 p-5">
+                      <div className="text-sm font-extrabold tracking-tight text-slate-900">What to expect</div>
+                      <ul className="mt-3 space-y-2 list-disc pl-5 text-sm text-slate-700 marker:text-indigo-400">
+                        {activeResult.whatToExpect.map((h) => (
+                          <li key={h}>{h}</li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="mt-6 flex flex-col sm:flex-row gap-2">
+                      <Link to="/services" className="w-full sm:w-auto" onClick={() => setActiveResult(null)}>
+                        <Button variant="secondary" className="w-full sm:w-auto rounded-2xl px-6 py-3">
+                          View packages
+                        </Button>
+                      </Link>
+                      <Link to="/book" className="w-full sm:w-auto" onClick={() => setActiveResult(null)}>
+                        <Button className="w-full sm:w-auto rounded-2xl px-6 py-3">Book online</Button>
+                      </Link>
+                    </div>
+
+                    <div className="mt-4 text-xs text-slate-500">
+                      Tip: choose the closest package/time — you can add notes and Dylan will confirm details after booking.
+                    </div>
                   </div>
-                </div>
-
-                <div className="mt-6">
-                  <div className="text-sm font-extrabold tracking-tight text-slate-900">What to expect</div>
-                  <div className="mt-3 grid gap-2">
-                    {activeResult.whatToExpect.map((h) => (
-                      <CheckItem key={h}>{h}</CheckItem>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mt-6 flex flex-col sm:flex-row gap-2">
-                  <Link to="/services" className="w-full sm:w-auto" onClick={() => setActiveResult(null)}>
-                    <Button variant="secondary" className="w-full sm:w-auto rounded-2xl px-6 py-3">
-                      View packages
-                    </Button>
-                  </Link>
-                  <Link to="/book" className="w-full sm:w-auto" onClick={() => setActiveResult(null)}>
-                    <Button className="w-full sm:w-auto rounded-2xl px-6 py-3">Book online</Button>
-                  </Link>
-                </div>
-
-                <div className="mt-4 text-xs text-slate-500">
-                  Tip: choose the closest package/time — you can add notes and Dylan will confirm details after booking.
                 </div>
               </div>
             </div>
