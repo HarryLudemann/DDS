@@ -106,10 +106,6 @@ export default function Home() {
                   <Button variant="secondary" className="w-full rounded-2xl px-7 py-3 text-base">See prices</Button>
                 </Link>
               </div>
-
-              <div className="mt-4 text-xs text-slate-500">
-                Live availability · No back-and-forth · Confirmation after booking
-              </div>
             </div>
 
             <div className="lg:col-span-5">
