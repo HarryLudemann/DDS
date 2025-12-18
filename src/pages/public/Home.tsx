@@ -31,30 +31,6 @@ function SectionTitle({
   );
 }
 
-function Feature({
-  title,
-  desc,
-}: {
-  title: string;
-  desc: string;
-}) {
-  return (
-    <div className="rounded-3xl bg-white/80 backdrop-blur ring-1 ring-black/5 p-5 sm:p-6">
-      <div className="flex items-start gap-3">
-        <div className="mt-1 h-10 w-10 rounded-2xl bg-indigo-600/10 text-indigo-700 ring-1 ring-indigo-600/15 grid place-items-center font-extrabold">
-          ✓
-        </div>
-        <div className="min-w-0">
-          <div className="text-sm sm:text-base font-extrabold tracking-tight text-slate-900">
-            {title}
-          </div>
-          <div className="mt-1 text-sm text-slate-600">{desc}</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function Pill({ children }: { children: React.ReactNode }) {
   return (
     <span className="inline-flex items-center rounded-full bg-white/70 ring-1 ring-black/5 px-3 py-1 text-xs font-semibold text-slate-700">
