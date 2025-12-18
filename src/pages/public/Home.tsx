@@ -63,6 +63,17 @@ function Pill({ children }: { children: React.ReactNode }) {
   );
 }
 
+function CheckItem({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-2">
+      <div className="mt-0.5 h-6 w-6 shrink-0 rounded-xl bg-indigo-600/10 text-indigo-700 ring-1 ring-indigo-600/15 grid place-items-center text-xs font-extrabold">
+        ✓
+      </div>
+      <div className="text-sm text-slate-700">{children}</div>
+    </div>
+  );
+}
+
 export default function Home() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,6 +83,10 @@ export default function Home() {
         title: string;
         sub: string;
         desc: string;
+        highlights: string[];
+        includes: string[];
+        idealFor: string[];
+        whatToExpect: string[];
         src: string;
         alt: string;
       }
@@ -112,7 +127,7 @@ export default function Home() {
             Choose a service, pick a time that fits, and you’re done. Studio detailing for consistent results.
           </p>
 
-          <div className="mt-6 hidden sm:flex flex-col sm:flex-row gap-3">
+          <div className="mt-6 flex flex-col sm:flex-row gap-3">
             <Link to="/book" className="w-full sm:w-auto">
               <Button className="w-full rounded-2xl px-7 py-3 text-base">Book Online</Button>
             </Link>
@@ -159,6 +174,41 @@ export default function Home() {
 
       <section className="space-y-6">
         <SectionTitle
+          eyebrow="Why DDS"
+          title="A careful process, not a quick wash"
+          desc="The goal is simple: consistent results and clear communication, every time you book."
+        />
+
+        <div className="grid gap-4 md:grid-cols-3">
+          {[ 
+            {
+              t: "Detail-first workflow",
+              d: "We focus on the high-impact areas, then do a final pass to catch the little things people notice.",
+            },
+            {
+              t: "Studio setup",
+              d: "Controlled lighting and environment helps produce a more consistent finish than rushing outdoors.",
+            },
+            {
+              t: "No surprises",
+              d: "Clear packages and durations up front. Add notes when booking and Dylan will confirm details after.",
+            },
+          ].map((x) => (
+            <div key={x.t} className="rounded-3xl bg-white p-6">
+              <div className="text-sm font-extrabold tracking-tight text-slate-900">{x.t}</div>
+              <div className="mt-2 text-sm text-slate-600">{x.d}</div>
+              <div className="mt-4">
+                <Link to="/book">
+                  <Button variant="secondary" className="rounded-2xl px-5 py-2.5">Check times</Button>
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-6">
+        <SectionTitle
           eyebrow="Results"
           title="Details you can see"
           desc="A proper detail is about the small things: clean lines, clear glass, and a fresh interior feel."
@@ -169,21 +219,84 @@ export default function Home() {
             {
               title: "Interior refresh",
               sub: "Seats, mats, plastics",
-              desc: "Deep vacuum, wipe-down, and tidy finishing work to make the cabin feel fresh — without the greasy shine.",
+              desc: "A focused interior reset that lifts the overall feel of the cabin — clean, tidy and comfortable.",
+              highlights: [
+                "Fresh, non-greasy finish on plastics",
+                "Better smell and overall feel",
+                "Cleaner lines and touch points",
+              ],
+              includes: [
+                "Thorough vacuum (seats, mats, footwells)",
+                "Wipe-down of dash/console/doors",
+                "Detail brushes for vents and tight areas",
+                "Glass cleaned inside for clarity",
+              ],
+              idealFor: [
+                "Daily drivers",
+                "Cars with dust, crumbs, and light grime",
+                "Before selling or returning a lease",
+              ],
+              whatToExpect: [
+                "Drop-off at the studio",
+                "We’ll focus on the high-impact areas first",
+                "You can leave notes for any priority spots",
+              ],
               src: "/images/interior.webp",
               alt: "Interior detailing result",
             },
             {
               title: "Paint gloss",
               sub: "Decon + finish",
-              desc: "A careful wash and decontamination step to remove build-up, followed by a finish that boosts gloss and clarity.",
+              desc: "A careful exterior process aimed at bringing back gloss and clarity — the kind of finish you notice in the sun.",
+              highlights: [
+                "Smoother paint feel",
+                "Deeper gloss and cleaner reflections",
+                "Sharper overall appearance",
+              ],
+              includes: [
+                "Safe wash process (minimising swirl risk)",
+                "Decontamination step to remove build-up",
+                "Wheel and tyre clean for a finished look",
+                "Final wipe-down / finish for gloss",
+              ],
+              idealFor: [
+                "Cars that feel rough after washing",
+                "Paint that looks dull or hazy",
+                "Anyone wanting a clean, crisp exterior",
+              ],
+              whatToExpect: [
+                "We’ll assess paint condition on arrival",
+                "We choose the safest process for your paint",
+                "You’ll get a clear before/after result",
+              ],
               src: "/images/paint.webp",
               alt: "Paint finish result",
             },
             {
               title: "Glass + trim",
               sub: "Crisp, streak-free",
-              desc: "Streak-free glass and clean trim details that sharpen the whole look — it’s the difference you notice immediately.",
+              desc: "A high-contrast clean that makes the car look sharper instantly — clear glass, tidy trim, finished edges.",
+              highlights: [
+                "Streak-free visibility",
+                "Sharper lines around trim",
+                "Cleaner ‘finished’ look overall",
+              ],
+              includes: [
+                "Interior + exterior glass cleaned",
+                "Trim wipe-down and tidy finishing",
+                "Final touch-up pass (missed spots fixed)",
+                "Detail focus on edges and corners",
+              ],
+              idealFor: [
+                "Cars with hazy glass or fingerprints",
+                "Anyone who notices the small details",
+                "Finishing touch before an event",
+              ],
+              whatToExpect: [
+                "We’ll prioritise visibility and clean lines",
+                "A final quality pass before handover",
+                "Book a time that fits your schedule",
+              ],
               src: "/images/glass.webp",
               alt: "Glass and trim detailing result",
             },
@@ -447,6 +560,44 @@ export default function Home() {
 
                 <p className="mt-4 text-sm text-slate-600">{activeResult.desc}</p>
 
+                <div className="mt-5 grid gap-5 sm:grid-cols-2">
+                  <div className="space-y-3">
+                    <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500">Highlights</div>
+                    <div className="grid gap-2">
+                      {activeResult.highlights.map((h) => (
+                        <CheckItem key={h}>{h}</CheckItem>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500">Ideal for</div>
+                    <div className="grid gap-2">
+                      {activeResult.idealFor.map((h) => (
+                        <CheckItem key={h}>{h}</CheckItem>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 rounded-2xl bg-slate-50 ring-1 ring-black/5 p-5">
+                  <div className="text-sm font-extrabold tracking-tight text-slate-900">What’s included</div>
+                  <div className="mt-3 grid gap-2">
+                    {activeResult.includes.map((h) => (
+                      <CheckItem key={h}>{h}</CheckItem>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <div className="text-sm font-extrabold tracking-tight text-slate-900">What to expect</div>
+                  <div className="mt-3 grid gap-2">
+                    {activeResult.whatToExpect.map((h) => (
+                      <CheckItem key={h}>{h}</CheckItem>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="mt-6 flex flex-col sm:flex-row gap-2">
                   <Link to="/services" className="w-full sm:w-auto" onClick={() => setActiveResult(null)}>
                     <Button variant="secondary" className="w-full sm:w-auto rounded-2xl px-6 py-3">
@@ -456,6 +607,10 @@ export default function Home() {
                   <Link to="/book" className="w-full sm:w-auto" onClick={() => setActiveResult(null)}>
                     <Button className="w-full sm:w-auto rounded-2xl px-6 py-3">Book online</Button>
                   </Link>
+                </div>
+
+                <div className="mt-4 text-xs text-slate-500">
+                  Tip: choose the closest package/time — you can add notes and Dylan will confirm details after booking.
                 </div>
               </div>
             </div>
