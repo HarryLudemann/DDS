@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../../utils/supabase";
 import type { AvailabilityRule } from "../../types/db";
+import { NZ_TZ } from "../../utils/format";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 
@@ -20,11 +21,8 @@ const DAYS: { key: DayKey; label: string; short: string }[] = [
 
 function todayNZDate(): string {
   // date-only string, safe for DB date column
-  const d = new Date();
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
+  // IMPORTANT: availability is configured in NZ time.
+  return new Intl.DateTimeFormat("en-CA", { timeZone: NZ_TZ }).format(new Date());
 }
 
 function timeToDb(t: string): string {

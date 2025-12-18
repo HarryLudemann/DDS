@@ -28,6 +28,7 @@ export default function Book() {
   const [services, setServices] = useState<Service[]>([]);
   const [times, setTimes] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingTimes, setLoadingTimes] = useState(false);
 
   const [serviceId, setServiceId] = useState("");
   const [startAt, setStartAt] = useState("");
@@ -68,11 +69,14 @@ export default function Book() {
       return;
     }
 
+    let cancelled = false;
+
     (async () => {
       setStatus(null);
       setStatusTone(null);
       setTimes([]);
       setStartAt("");
+      setLoadingTimes(true);
 
       const from = new Date();
       const to = addDays(from, 21);
@@ -84,9 +88,22 @@ export default function Book() {
         p_step_mins: 15,
       });
 
-      if (error) setStatus(error.message);
-      else setTimes((data ?? []).map((r: any) => r.start_at));
+      if (cancelled) return;
+
+      if (error) {
+        setStatusTone("error");
+        setStatus(error.message);
+        setTimes([]);
+      } else {
+        setTimes((data ?? []).map((r: any) => r.start_at));
+      }
+
+      setLoadingTimes(false);
     })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [serviceId]);
 
   const grouped = useMemo(() => {
@@ -159,6 +176,10 @@ export default function Book() {
               {!serviceId ? (
                 <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600 ring-1 ring-black/5">
                   Select a service to see availability.
+                </div>
+              ) : loadingTimes ? (
+                <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600 ring-1 ring-black/5">
+                  Loading available times…
                 </div>
               ) : grouped.length === 0 ? (
                 <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600 ring-1 ring-black/5">
