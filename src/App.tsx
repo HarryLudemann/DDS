@@ -8,9 +8,10 @@ import Book from "./pages/public/Book";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminGate from "./pages/admin/AdminGate";
 import AdminHome from "./pages/admin/AdminHome";
+import AdminServices from "./pages/admin/AdminServices";
+import AdminPackages from "./pages/admin/AdminPackages";
 import AdminAvailability from "./pages/admin/AdminAvailability";
 import AdminBookings from "./pages/admin/AdminBookings";
-import AdminServices from "./pages/admin/AdminServices";
 
 
 export default function App() {
@@ -22,20 +23,30 @@ export default function App() {
         <Route path="/book" element={<Book />} />
 
         <Route
-          path="/admin/services"
-          element={
-            <AdminGate>
-              <AdminServices />
-            </AdminGate>
-          }
-        />
-        <Route path="/admin/login" element={<AdminLogin />} />
+          path="/admin/login" element={<AdminLogin />} />
 
         <Route
           path="/admin"
           element={
             <AdminGate>
               <AdminHome />
+            </AdminGate>
+          }
+        />
+        <Route
+          path="/admin/packages"
+          element={
+            <AdminGate>
+              <AdminPackages />
+            </AdminGate>
+          }
+        />
+
+        <Route
+          path="/admin/services"
+          element={
+            <AdminGate>
+              <AdminServices />
             </AdminGate>
           }
         />

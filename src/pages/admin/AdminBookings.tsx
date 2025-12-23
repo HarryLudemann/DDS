@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../utils/supabase";
 import type { Booking, Service } from "../../types/db";
 import { Card } from "../../components/ui/Card";
@@ -8,13 +8,32 @@ import { fmtDayNZ, fmtTimeNZ } from "../../utils/format";
 
 type BookingRow = Booking & { service?: Pick<Service, "title"> | null };
 
+type PackageRow = { code: string; title: string; service_id: string | null };
+
 export default function AdminBookings() {
   const [rows, setRows] = useState<BookingRow[]>([]);
+  const [packages, setPackages] = useState<PackageRow[]>([]);
   const [status, setStatus] = useState<string | null>(null);
+
+  const packageTitleByServiceId = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of packages) {
+      if (p.service_id) m.set(p.service_id, p.title);
+    }
+    return m;
+  }, [packages]);
 
   useEffect(() => {
     (async () => {
       setStatus(null);
+
+      const { data: pkgData, error: pkgErr } = await supabase
+        .from("packages")
+        .select("code,title,service_id")
+        .order("code", { ascending: true });
+
+      if (pkgErr) setStatus(pkgErr.message);
+      setPackages((pkgData ?? []) as PackageRow[]);
 
       // IMPORTANT:
       // Use an alias so Supabase returns a single object (not an array)
@@ -56,7 +75,7 @@ export default function AdminBookings() {
                 <div>
                   <div className="text-sm font-extrabold text-slate-900">{b.customer_name}</div>
                   <div className="mt-1 text-sm text-slate-600">
-                    {b.service?.title ?? b.service_id}
+                    {packageTitleByServiceId.get(b.service_id) ?? b.service?.title ?? b.service_id}
                   </div>
                 </div>
 

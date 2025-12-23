@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { clsx } from "../../utils/format";
 import { Button } from "../ui/Button";
@@ -6,7 +6,7 @@ import { supabase } from "../../utils/supabase";
 
 function Container({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 min-w-0 overflow-x-clip">
+    <div className="mx-auto w-full max-w-6xl px-2 sm:px-4 min-w-0 overflow-x-clip">
       {children}
     </div>
   );
@@ -55,10 +55,30 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const location = useLocation();
+  const [overflowOffenders, setOverflowOffenders] = useState<
+    { width: number; tag: string; id: string; className: string }[]
+  >([]);
+
+  const debugOverflow = useMemo(
+    () => {
+      if (import.meta.env.DEV) return true;
+
+      const fromSearch = new URLSearchParams(location.search).get("debugOverflow") === "1";
+      if (fromSearch) return true;
+
+      // HashRouter URLs often look like: /#/path?debugOverflow=1
+      const hash = window.location.hash || "";
+      const qIndex = hash.indexOf("?");
+      if (qIndex === -1) return false;
+      const qs = hash.slice(qIndex + 1);
+      return new URLSearchParams(qs).get("debugOverflow") === "1";
+    },
+    [location.search]
+  );
 
   const nav = [
-    { to: "/services", label: "Services", sub: "Packages, duration and pricing" },
-    { to: "/book", label: "Book", sub: "Choose a service and pick a time" },
+    { to: "/services", label: "Packages", sub: "Pricing and inclusions" },
+    { to: "/book", label: "Booking", sub: "Pick a day + drop-off window" },
   ];
 
   // Close menu on route change
@@ -91,11 +111,15 @@ export function Shell({ children }: { children: React.ReactNode }) {
     let startX = 0;
     let startY = 0;
 
-    function isInteractiveTarget(t: EventTarget | null) {
+    function isTextInputTarget(t: EventTarget | null) {
       const el = t as HTMLElement | null;
       if (!el) return false;
+
+      const editable = el.closest("[contenteditable='true']");
+      if (editable) return true;
+
       const tag = el.tagName;
-      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || tag === "BUTTON";
+      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
     }
 
     const onStart = (e: TouchEvent) => {
@@ -106,7 +130,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
     const onMove = (e: TouchEvent) => {
       if (e.touches.length !== 1) return;
-      if (isInteractiveTarget(e.target)) return;
+      if (isTextInputTarget(e.target)) return;
 
       const dx = e.touches[0].clientX - startX;
       const dy = e.touches[0].clientY - startY;
@@ -127,12 +151,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!import.meta.env.DEV) return;
+    if (!debugOverflow) return;
     const t = window.setTimeout(() => {
       const vw = document.documentElement.clientWidth;
       const offenders = Array.from(document.querySelectorAll("body *"))
         .map((el) => ({ el, w: (el as HTMLElement).scrollWidth }))
-        .filter((x) => x.w > vw + 2)
+        .filter((x) => x.w > vw)
         .sort((a, b) => b.w - a.w)
         .slice(0, 8)
         .map((x) => {
@@ -149,10 +173,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
         // eslint-disable-next-line no-console
         console.table(offenders);
       }
+
+      setOverflowOffenders(offenders);
     }, 300);
 
     return () => window.clearTimeout(t);
-  }, [location.pathname, open]);
+  }, [location.pathname, location.search, open]);
 
   // Admin status
   useEffect(() => {
@@ -195,7 +221,24 @@ export function Shell({ children }: { children: React.ReactNode }) {
     !open && !location.pathname.startsWith("/admin") && location.pathname !== "/book";
 
   return (
-    <div className="min-h-dvh bg-[#f7f7f8] overflow-x-clip">
+    <div className="min-h-[100svh] bg-[#f7f7f8] overflow-x-clip flex flex-col">
+      {debugOverflow && overflowOffenders.length > 0 && (
+        <div className="fixed bottom-2 left-2 right-2 z-[10000] pointer-events-none">
+          <div className="mx-auto max-w-6xl">
+            <div className="rounded-2xl bg-black/80 text-white ring-1 ring-white/15 px-4 py-3 text-xs">
+              <div className="font-extrabold">Overflow debug (top offender)</div>
+              <div className="mt-1 opacity-90">width: {overflowOffenders[0].width}px</div>
+              <div className="mt-1 opacity-90">tag: {overflowOffenders[0].tag}</div>
+              {overflowOffenders[0].id && (
+                <div className="mt-1 opacity-90">id: {overflowOffenders[0].id}</div>
+              )}
+              {overflowOffenders[0].className && (
+                <div className="mt-1 opacity-90 break-words">class: {overflowOffenders[0].className}</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       {/* HEADER */}
       <header className="sticky top-0 z-40 bg-[#f7f7f8]/90 backdrop-blur">
         <div className="border-b border-black/5">
@@ -229,7 +272,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               {/* Desktop actions */}
               <div className="hidden md:flex items-center gap-2">
                 <Link to="/book">
-                  <Button>Book Online</Button>
+                  <Button>Check availability</Button>
                 </Link>
 
                 {isAdmin && (
@@ -260,12 +303,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* MAIN */}
-      <main>
+      <main className="flex-1">
         <Container>
           <div
             className={clsx(
               "py-10 sm:py-12 md:py-16 min-w-0",
-              showMobileCta ? "pb-28" : ""
+              showMobileCta ? "pb-[calc(env(safe-area-inset-bottom)+112px)]" : ""
             )}
           >
             {children}
@@ -276,10 +319,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
       {showMobileCta && (
         <div className="fixed inset-x-0 bottom-0 z-30 md:hidden">
           <div className="pointer-events-none absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-[#f7f7f8] to-transparent" />
-          <div className="bg-[#f7f7f8]/95 backdrop-blur border-t border-black/5 px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
+          <div className="bg-[#f7f7f8]/95 backdrop-blur border-t border-black/5 px-2 sm:px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
             <div className="mx-auto max-w-6xl">
               <Link to="/book" className="block">
-                <Button className="w-full py-3 text-base rounded-2xl">Book Online</Button>
+                <Button className="w-full py-3 text-base rounded-2xl">Check availability</Button>
               </Link>
             </div>
           </div>
@@ -290,13 +333,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <footer className="py-10 text-sm text-slate-500">
         <Container>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div>© {new Date().getFullYear()} Dylan’s Detailing Service</div>
-            <div>Wellington · Online booking</div>
+            <div> {new Date().getFullYear()} Dylan’s Detailing Service</div>
+            <div>Wellington</div>
           </div>
         </Container>
       </footer>
 
-      {/* ✅ FULLSCREEN MOBILE MENU (only rendered when open) */}
+      {/* FULLSCREEN MOBILE MENU (only rendered when open) */}
       {open && (
         <div
           className="fixed inset-0 z-[9999] md:hidden overflow-hidden"
@@ -312,7 +355,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
           {/* Sheet */}
           <div
-            className="absolute inset-0 h-[100dvh] w-full overflow-hidden"
+            className="absolute inset-0 h-[100svh] w-full overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Background polish */}
@@ -329,7 +372,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                   <div className="text-sm font-extrabold tracking-tight text-slate-900 truncate">
                     Dylan’s <span className="text-indigo-600">Detailing</span> Service
                   </div>
-                  <div className="text-xs text-slate-500">Wellington · Studio detailing</div>
+                  <div className="text-xs text-slate-500">Wellington</div>
                 </div>
 
                 <button
@@ -345,21 +388,21 @@ export function Shell({ children }: { children: React.ReactNode }) {
               <div className="px-5 pb-6 flex-1 overflow-y-auto">
                 <Link to="/book" className="block">
                   <Button className="w-full py-4 text-base rounded-2xl">
-                    Book Online
+                    Check availability
                   </Button>
                 </Link>
 
                 <div className="mt-5 space-y-3">
                   <MenuCard
                     to="/services"
-                    title="Services"
-                    subtitle="Packages, duration and pricing"
+                    title="Packages"
+                    subtitle="Pricing and inclusions"
                     onClick={() => setOpen(false)}
                   />
                   <MenuCard
                     to="/book"
                     title="Booking"
-                    subtitle="Pick a service and select an available time"
+                    subtitle="Pick a day + drop-off window"
                     onClick={() => setOpen(false)}
                   />
                 </div>

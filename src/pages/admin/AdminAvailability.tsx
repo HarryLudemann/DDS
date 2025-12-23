@@ -87,8 +87,8 @@ export default function AdminAvailability() {
         if (!newestByDow.has(r.dow)) newestByDow.set(r.dow, r as AvailabilityRule);
       }
 
-      setDraft((prev) => {
-        const next = { ...prev };
+      setDraft(() => {
+        const next = {} as Record<DayKey, DayDraft>;
         for (const d of DAYS) {
           const r = newestByDow.get(d.key);
           if (r) {
@@ -98,6 +98,8 @@ export default function AdminAvailability() {
               start: timeFromDb(r.start_time),
               end: timeFromDb(r.end_time),
             };
+          } else {
+            next[d.key] = { enabled: false, start: "08:00", end: "17:00" };
           }
         }
         return next;
@@ -249,6 +251,26 @@ export default function AdminAvailability() {
 
       <Card className="space-y-4">
         <div className="flex flex-wrap gap-2">
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setAll([0, 1, 2, 3, 4, 5, 6], false);
+              setAll([6, 0], true, "08:00", "17:00");
+            }}
+          >
+            Weekends only
+          </Button>
+
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setAll([0, 1, 2, 3, 4, 5, 6], false);
+              setAll([1, 2, 3, 4, 5], true, "08:00", "17:00");
+            }}
+          >
+            Weekdays only
+          </Button>
+
           <Button variant="secondary" onClick={() => setAll([1, 2, 3, 4, 5], true, "08:00", "17:00")}>
             Weekdays 8–5
           </Button>

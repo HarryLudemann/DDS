@@ -5,7 +5,7 @@ import { Button } from "../../components/ui/Button";
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-dvh">
+    <div className="min-h-[100svh]">
       <header className="border-b border-border bg-bg/80 backdrop-blur">
         <div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between">
           <Link to="/" className="text-sm text-muted hover:text-text">← Back to site</Link>

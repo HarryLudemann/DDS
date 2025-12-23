@@ -1,11 +1,10 @@
-
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "../../utils/supabase";
-import type { Service } from "../../types/db";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
-import { fmtMoney, fmtDuration } from "../../utils/format";
+import { fmtMoney } from "../../utils/format";
+import { usePackages } from "../../hooks/usePackages";
+import { accentClass, isMostPopular } from "../../utils/packageUi";
 
 function SectionTitle({
   eyebrow,
@@ -40,8 +39,7 @@ function Pill({ children }: { children: React.ReactNode }) {
 }
 
 export default function Home() {
-  const [services, setServices] = useState<Service[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { packages } = usePackages();
   const [activeResult, setActiveResult] = useState<
     | null
     | {
@@ -57,28 +55,59 @@ export default function Home() {
       }
   >(null);
 
-  const topServices = useMemo(() => services.slice(0, 3), [services]);
+  const modalScrollRef = useRef<HTMLDivElement | null>(null);
+
+  const topPackages = useMemo(() => packages, [packages]);
 
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const { data } = await supabase
-        .from("services")
-        .select("*")
-        .eq("active", true)
-        .order("sort_order", { ascending: true })
-        .limit(6);
+    if (!activeResult) return;
 
-      setServices((data ?? []) as Service[]);
-      setLoading(false);
-    })();
-  }, []);
+    // Robust scroll lock: prevent background scroll WITHOUT jumping the page.
+    const scrollY = window.scrollY;
+    const prev = {
+      overflow: document.body.style.overflow,
+      position: document.body.style.position,
+      top: document.body.style.top,
+      width: document.body.style.width,
+      paddingRight: document.body.style.paddingRight,
+    };
+
+    const scrollbarW = window.innerWidth - document.documentElement.clientWidth;
+    document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
+    if (scrollbarW > 0) document.body.style.paddingRight = `${scrollbarW}px`;
+
+    // Ensure modal content starts at the top.
+    window.requestAnimationFrame(() => {
+      modalScrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    });
+
+    return () => {
+      document.body.style.overflow = prev.overflow;
+      document.body.style.position = prev.position;
+      document.body.style.top = prev.top;
+      document.body.style.width = prev.width;
+      document.body.style.paddingRight = prev.paddingRight;
+      window.scrollTo(0, scrollY);
+    };
+  }, [activeResult]);
+
+  useEffect(() => {
+    if (!activeResult) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setActiveResult(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [activeResult]);
 
   return (
-    <div className="space-y-16 sm:space-y-20">
+    <div className="space-y-16 sm:space-y-20 overflow-x-clip">
       <section className="relative overflow-hidden rounded-3xl bg-white ring-1 ring-black/5">
-        <div className="absolute -top-24 -right-24 h-80 w-80 rounded-full bg-indigo-600/10 blur-2xl" />
-        <div className="absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-slate-900/5 blur-2xl" />
+        <div className="hidden sm:block absolute -top-24 -right-24 h-80 w-80 rounded-full bg-indigo-600/10 blur-2xl" />
+        <div className="hidden sm:block absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-slate-900/5 blur-2xl" />
 
         <div className="relative p-6 sm:p-10">
           <div className="grid gap-8 lg:grid-cols-12 lg:items-center">
@@ -86,7 +115,6 @@ export default function Home() {
               <div className="flex flex-wrap gap-2">
                 <Pill>Wellington</Pill>
                 <Pill>Studio drop-off</Pill>
-                <Pill>Book online</Pill>
               </div>
 
               <h1 className="mt-6 text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900">
@@ -95,12 +123,12 @@ export default function Home() {
               </h1>
 
               <p className="mt-4 text-base sm:text-lg text-slate-600 max-w-prose">
-                Choose a package, pick an available time, and you’re locked in. Add notes for any priority areas — Dylan confirms details after booking.
+                Choose a package, pick a day + drop-off window, and you’re in. Add notes for any priority areas — Dylan confirms the exact time after booking.
               </p>
 
               <div className="mt-6 flex flex-col sm:flex-row gap-3">
                 <Link to="/book" className="w-full sm:w-auto">
-                  <Button className="w-full rounded-2xl px-7 py-3 text-base">Check times</Button>
+                  <Button className="w-full rounded-2xl px-7 py-3 text-base">Check availability</Button>
                 </Link>
                 <Link to="/services" className="w-full sm:w-auto">
                   <Button variant="secondary" className="w-full rounded-2xl px-7 py-3 text-base">See prices</Button>
@@ -113,7 +141,7 @@ export default function Home() {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <div className="text-xs font-semibold tracking-wider uppercase text-white/70">How it works</div>
-                    <div className="mt-2 text-xl font-extrabold tracking-tight">3 steps. No overlap.</div>
+                    <div className="mt-2 text-xl font-extrabold tracking-tight">3 simple steps</div>
                   </div>
                   <div className="shrink-0 rounded-2xl bg-white/10 ring-1 ring-white/15 px-3 py-2 text-xs font-extrabold">
                     DDS
@@ -122,22 +150,22 @@ export default function Home() {
 
                 <div className="mt-5 grid gap-3">
                   <div className="rounded-2xl bg-white/10 ring-1 ring-white/10 p-4">
-                    <div className="text-sm font-extrabold">1) Pick a package</div>
+                    <div className="text-sm font-extrabold">Pick a package</div>
                     <div className="mt-1 text-sm text-white/80">Clear inclusions.</div>
                   </div>
                   <div className="rounded-2xl bg-white/10 ring-1 ring-white/10 p-4">
-                    <div className="text-sm font-extrabold">2) Choose a time</div>
-                    <div className="mt-1 text-sm text-white/80">Only valid starts show.</div>
+                    <div className="text-sm font-extrabold">Choose a day + window</div>
+                    <div className="mt-1 text-sm text-white/80">We’ll confirm the exact drop-off time.</div>
                   </div>
                   <div className="rounded-2xl bg-white/10 ring-1 ring-white/10 p-4">
-                    <div className="text-sm font-extrabold">3) Drop off</div>
+                    <div className="text-sm font-extrabold">Drop off</div>
                     <div className="mt-1 text-sm text-white/80">Notes welcome — we confirm after.</div>
                   </div>
                 </div>
 
                 <div className="mt-5 flex flex-col sm:flex-row gap-2">
                   <Link to="/book" className="w-full">
-                    <Button variant="inverted" className="w-full rounded-2xl px-6 py-3 ring-1 ring-white/15">Book online</Button>
+                    <Button variant="inverted" className="w-full rounded-2xl px-6 py-3 ring-1 ring-white/15">Check availability</Button>
                   </Link>
                 </div>
               </div>
@@ -176,7 +204,7 @@ export default function Home() {
                 "Before selling or returning a lease",
               ],
               whatToExpect: [
-                "Drop-off at the studio",
+                "Drop-off",
                 "We’ll focus on the high-impact areas first",
                 "You can leave notes for any priority spots",
               ],
@@ -234,7 +262,7 @@ export default function Home() {
               whatToExpect: [
                 "We’ll prioritise visibility and clean lines",
                 "A final quality pass before handover",
-                "Book a time that fits your schedule",
+                "Choose a day + drop-off window that fits your schedule",
               ],
               src: "/images/glass.webp",
               alt: "Glass and trim detailing result",
@@ -244,7 +272,7 @@ export default function Home() {
               key={x.title}
               type="button"
               onClick={() => setActiveResult(x)}
-              className="rounded-3xl bg-white overflow-hidden text-left border-0 shadow-none transition-transform hover:scale-[1.01] focus:outline-none focus-visible:ring-4 focus-visible:ring-indigo-200"
+              className="w-full rounded-3xl bg-white overflow-hidden text-left border-0 shadow-none transition-transform hover:scale-[1.01] focus:outline-none focus-visible:ring-4 focus-visible:ring-indigo-200"
             >
               <div className="relative aspect-[4/3] bg-slate-100">
                 <img
@@ -266,7 +294,7 @@ export default function Home() {
         <div className="pt-2 relative z-10">
           <div className="flex flex-col sm:flex-row gap-2">
             <Link to="/book" className="inline-block relative z-10">
-              <Button className="rounded-2xl px-6 py-3">Check times</Button>
+              <Button className="rounded-2xl px-6 py-3">Check availability</Button>
             </Link>
             <Link to="/services" className="inline-block relative z-10">
               <Button variant="secondary" className="rounded-2xl px-6 py-3">
@@ -281,14 +309,14 @@ export default function Home() {
         <SectionTitle
           eyebrow="Why DDS"
           title="Detailing that’s built to be consistent"
-          desc="DDS is studio drop-off only in Wellington. The focus is simple: clear packages, careful work, and tidy finishing — without the back-and-forth."
+          desc="The focus is simple: clear packages, careful work, and tidy finishing — without the back-and-forth."
         />
 
         <div className="grid gap-4 md:grid-cols-2">
           {[ 
             {
               t: "Clear packages, clear outcomes",
-              d: "Pricing and inclusions are laid out up front so you know what you’re booking before you choose a time.",
+              d: "Pricing and inclusions are laid out up front so you know what you’re booking before you choose a day + drop-off window.",
             },
             {
               t: "Careful workflow + tidy finishing",
@@ -332,7 +360,7 @@ export default function Home() {
                 </Button>
               </Link>
               <Link to="/book" className="w-full md:w-auto">
-                <Button className="w-full md:w-auto rounded-2xl px-6 py-3">Check times</Button>
+                <Button className="w-full md:w-auto rounded-2xl px-6 py-3">Check availability</Button>
               </Link>
             </div>
           </div>
@@ -341,49 +369,71 @@ export default function Home() {
 
       <section className="space-y-6">
         <SectionTitle
-          eyebrow="Services"
-          title="Popular options"
-          desc="Choose a package that fits your car and your time. Book online in minutes."
+          eyebrow="Packages"
+          title="Packages"
+          desc="Clear inclusions and starting prices. Check availability in minutes."
         />
 
-        <div className="grid gap-4 md:grid-cols-3">
-          {(loading ? Array.from({ length: 3 }) : topServices).map((s: any, idx: number) => (
-            <Card key={s?.id ?? idx} className="p-6 min-w-0">
-              {loading ? (
-                <div className="space-y-3">
-                  <div className="h-5 w-2/3 rounded bg-slate-100" />
-                  <div className="h-4 w-1/2 rounded bg-slate-100" />
-                  <div className="h-4 w-full rounded bg-slate-100" />
-                  <div className="h-10 w-full rounded-2xl bg-slate-100" />
+        <div className="grid gap-5 lg:grid-cols-2">
+          {topPackages.map((p) => (
+            <Card
+              key={p.code}
+              className={
+                "relative flex flex-col gap-5 overflow-hidden " +
+                (isMostPopular(p.code) ? "ring-2 ring-indigo-600/35" : "")
+              }
+            >
+              <div className="flex items-start justify-between gap-4 min-w-0">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={"h-2.5 w-2.5 rounded-full bg-gradient-to-r shrink-0 " + accentClass(p.code)} />
+                      <div className="text-lg font-extrabold tracking-tight truncate">{p.title}</div>
+                    </div>
+                    {isMostPopular(p.code) && (
+                      <span className="inline-flex items-center rounded-full bg-indigo-600 text-white px-2.5 py-1 text-xs font-extrabold">
+                        Most popular
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1 text-sm text-slate-600">{p.subtitle}</div>
                 </div>
-              ) : (
-                <div className="flex flex-col h-full min-w-0">
-                  <div className="text-base font-extrabold tracking-tight text-slate-900 truncate">
-                    {s.title}
-                  </div>
-                  <div className="mt-2 text-sm text-slate-600">
-                    {fmtMoney(s.price_cents)} · {fmtDuration(s.duration_mins)}
-                  </div>
-                  {s.description && (
-                    <p className="mt-3 text-sm text-slate-700 break-words">
-                      {s.description}
-                    </p>
-                  )}
 
-                  <div className="mt-auto pt-5 flex flex-col gap-2">
-                    <Link to={`/book?service=${encodeURIComponent(String(s.id))}`} className="w-full">
-                      <Button className="w-full rounded-2xl py-3">Book this service</Button>
-                    </Link>
-                    <Link to="/services" className="w-full">
-                      <Button variant="secondary" className="w-full rounded-2xl py-3">
-                        View all services
-                      </Button>
-                    </Link>
-                  </div>
+                <div className="shrink-0 text-right">
+                  <div className="text-lg font-extrabold">From {fmtMoney(p.fromPriceCents)}</div>
+                  <div className="mt-2 text-xs text-slate-500">Time varies</div>
                 </div>
-              )}
+              </div>
+
+              <div className="text-sm text-slate-700">{p.summary}</div>
+
+              <div className="rounded-2xl bg-slate-50 ring-1 ring-black/5 p-4">
+                <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500">Top inclusions</div>
+                <ul className="mt-3 space-y-2 text-sm text-slate-700">
+                  {p.includes.slice(0, 4).map((x) => (
+                    <li key={x} className="flex items-start gap-2">
+                      <span className={"mt-1.5 h-1.5 w-1.5 rounded-full bg-gradient-to-r " + accentClass(p.code)} />
+                      <span className="min-w-0">{x}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="mt-auto">
+                <Link to={`/book?package=${encodeURIComponent(String(p.code))}`} className="w-full">
+                  <Button className="w-full rounded-2xl py-3">Check availability</Button>
+                </Link>
+              </div>
             </Card>
           ))}
+        </div>
+
+        <div className="pt-2">
+          <Link to="/services">
+            <Button variant="secondary" className="rounded-2xl px-6 py-3">
+              See packages + inclusions
+            </Button>
+          </Link>
         </div>
       </section>
 
@@ -398,11 +448,11 @@ export default function Home() {
           {[
             {
               q: "Do you offer mobile detailing?",
-              a: "No — DDS is studio drop-off only in Wellington. This helps keep results consistent and high-quality.",
+              a: "No — drop-off only. This helps keep results consistent and high-quality.",
             },
             {
-              q: "How do booking times work for longer services?",
-              a: "You choose a service first. The system only shows start times where the full duration fits inside working hours and doesn’t overlap other bookings.",
+              q: "How do bookings work for longer packages?",
+              a: "You choose a package first, then pick a day + window and select an available time inside it. Behind the scenes, the system only offers options that fit inside working hours and don’t overlap other bookings.",
             },
             {
               q: "What info do I need to provide?",
@@ -424,7 +474,7 @@ export default function Home() {
 
       {activeResult && (
         <div
-          className="fixed inset-0 z-50"
+          className="fixed inset-0 z-50 overflow-y-auto overscroll-contain"
           role="dialog"
           aria-modal="true"
           aria-label={activeResult.title}
@@ -433,10 +483,10 @@ export default function Home() {
             type="button"
             aria-label="Close"
             onClick={() => setActiveResult(null)}
-            className="absolute inset-0 bg-black/40"
+            className="fixed inset-0 bg-black/40"
           />
 
-          <div className="absolute inset-0 flex items-center justify-center p-3 sm:p-6">
+          <div className="relative flex min-h-[100svh] items-start justify-center p-3 sm:items-center sm:p-6">
             <div className="relative w-full max-w-5xl overflow-hidden rounded-3xl bg-white shadow-2xl">
               <button
                 type="button"
@@ -470,11 +520,8 @@ export default function Home() {
                 </div>
 
                 <div className="lg:col-span-7">
-                  <div className="max-h-[72vh] lg:max-h-[640px] overflow-y-auto p-5 sm:p-7">
+                  <div ref={modalScrollRef} className="max-h-[72svh] lg:max-h-[640px] overflow-y-auto p-5 sm:p-7">
                     <div className="flex flex-wrap gap-2">
-                      <span className="inline-flex items-center rounded-full bg-indigo-600/10 text-indigo-700 ring-1 ring-indigo-600/15 px-3 py-1 text-xs font-semibold">
-                        Studio drop-off
-                      </span>
                       <span className="inline-flex items-center rounded-full bg-slate-100 text-slate-700 ring-1 ring-black/5 px-3 py-1 text-xs font-semibold">
                         Wellington
                       </span>
@@ -530,12 +577,12 @@ export default function Home() {
                         </Button>
                       </Link>
                       <Link to="/book" className="w-full sm:w-auto" onClick={() => setActiveResult(null)}>
-                        <Button className="w-full sm:w-auto rounded-2xl px-6 py-3">Book online</Button>
+                        <Button className="w-full sm:w-auto rounded-2xl px-6 py-3">Check availability</Button>
                       </Link>
                     </div>
 
                     <div className="mt-4 text-xs text-slate-500">
-                      Tip: choose the closest package/time — you can add notes and Dylan will confirm details after booking.
+                      Tip: choose the closest package — you can add notes and Dylan will confirm details after booking.
                     </div>
                   </div>
                 </div>
