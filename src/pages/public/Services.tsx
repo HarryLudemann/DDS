@@ -33,12 +33,12 @@ export default function Services() {
                 (isMostPopular(p.code) ? "ring-2 ring-indigo-600/35" : "")
               }
             >
-              <div className="flex items-start justify-between gap-4 min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 min-w-0">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <div className="flex items-center gap-2 min-w-0">
                       <span className={"h-2.5 w-2.5 rounded-full bg-gradient-to-r shrink-0 " + accentClass(p.code)} />
-                      <div className="text-lg font-extrabold tracking-tight truncate">{p.title}</div>
+                      <div className="text-lg font-extrabold tracking-tight whitespace-normal break-normal hyphens-auto leading-tight">{p.title}</div>
                     </div>
                     {isMostPopular(p.code) && (
                       <span className="inline-flex items-center rounded-full bg-indigo-600 text-white px-2.5 py-1 text-xs font-extrabold">
@@ -49,9 +49,9 @@ export default function Services() {
                   <div className="mt-1 text-sm text-muted">{p.subtitle}</div>
                 </div>
 
-                <div className="shrink-0 text-right">
+                <div className="shrink-0 sm:text-right">
                   <div className="text-lg font-extrabold">From {fmtMoneyNZD(p.fromPriceCents)}</div>
-                  <div className="mt-2 flex justify-end">
+                  <div className="mt-1 sm:mt-2 flex sm:justify-end">
                     <Pill>Time varies</Pill>
                   </div>
                 </div>

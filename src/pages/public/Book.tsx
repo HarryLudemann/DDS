@@ -33,6 +33,10 @@ type Step = 1 | 2 | 3 | 4;
 
 const AVAILABILITY_CACHE_TTL_MS = 60_000;
 const availabilityCache = new Map<string, { at: number; times: string[] }>();
+const availabilityInFlight = new Map<
+  string,
+  Promise<{ times: string[]; error: { message: string } | null }>
+>();
 
 function cn(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
@@ -224,36 +228,57 @@ export default function Book() {
 
     const cached = availabilityCache.get(serviceId);
     const cacheFresh = cached && Date.now() - cached.at < AVAILABILITY_CACHE_TTL_MS;
-    if (cacheFresh && cached.times.length > 0) {
-      setTimes(cached.times);
+    const cachedTimes = cached?.times ?? [];
+    const hasCached = cachedTimes.length > 0;
+    if (hasCached) setTimes(cachedTimes);
+
+    // If we already have fresh cached availability and we're not explicitly refreshing,
+    // don't refetch (keeps the UI snappy when navigating back/forth).
+    if (cacheFresh && hasCached && timesNonce === 0 && !debug) {
+      setLoadingTimes(false);
+      return;
     }
 
     let cancelled = false;
 
     (async () => {
       // Only show a blocking spinner if we don't already have something to show.
-      if (!(cacheFresh && cached?.times?.length)) setLoadingTimes(true);
+      if (!hasCached) setLoadingTimes(true);
 
       const from = new Date();
       const to = addDays(from, 22);
       const fromNZ = toISODateNZ(from);
       const toNZ = toISODateNZ(to);
 
-      const { data, error } = await supabase.rpc("get_available_starts", {
-        p_service_id: serviceId,
-        p_from: fromNZ,
-        p_to: toNZ,
-        p_step_mins: 15,
-      });
+      let promise = availabilityInFlight.get(serviceId);
+      if (!promise) {
+        promise = (async () => {
+          const { data, error } = await supabase.rpc("get_available_starts", {
+            p_service_id: serviceId,
+            p_from: fromNZ,
+            p_to: toNZ,
+            p_step_mins: 15,
+          });
+
+          if (error) return { times: [], error: { message: error.message } };
+          const nextTimes = (data ?? []).map((r: any) => r.start_at);
+          return { times: nextTimes, error: null };
+        })().finally(() => {
+          availabilityInFlight.delete(serviceId);
+        });
+
+        availabilityInFlight.set(serviceId, promise);
+      }
+
+      const { times: nextTimes, error } = await promise;
 
       if (cancelled) return;
 
       if (error) {
         setStatusTone("error");
         setStatus(error.message);
-        setTimes([]);
+        if (!hasCached) setTimes([]);
       } else {
-        const nextTimes = (data ?? []).map((r: any) => r.start_at);
         availabilityCache.set(serviceId, { at: Date.now(), times: nextTimes });
         setTimes(nextTimes);
       }
@@ -671,7 +696,7 @@ export default function Book() {
                                       accentClass(p.code)
                                     )}
                                   />
-                                  <div className="min-w-0 flex-1 text-base sm:text-lg font-extrabold tracking-tight text-slate-900 whitespace-normal break-words leading-tight">
+                                  <div className="min-w-0 flex-1 text-base sm:text-lg font-extrabold tracking-tight text-slate-900 whitespace-normal break-normal hyphens-auto leading-tight">
                                     {p.title}
                                   </div>
                                 </div>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { clsx } from "../../utils/format";
 import { Button } from "../ui/Button";
@@ -28,10 +28,12 @@ function MenuCard({
       to={to}
       onClick={onClick}
       className={clsx(
-        "block rounded-3xl bg-white",
+        "block no-underline rounded-3xl bg-white",
         "ring-1 ring-black/10 shadow-sm",
         "px-5 py-4 transition",
-        "active:scale-[0.99] hover:bg-slate-50"
+        "hover:bg-slate-50 hover:ring-black/15",
+        "active:scale-[0.99]",
+        "focus:outline-none focus-visible:ring-4 focus-visible:ring-indigo-200"
       )}
     >
       <div className="flex items-center justify-between gap-4">
@@ -54,6 +56,10 @@ function MenuCard({
 export function Shell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [mobileCtaVisible, setMobileCtaVisible] = useState(false);
+  const [mobileCtaEligible, setMobileCtaEligible] = useState(false);
+  const [footerInView, setFooterInView] = useState(false);
+  const footerRef = useRef<HTMLElement | null>(null);
   const location = useLocation();
   const [overflowOffenders, setOverflowOffenders] = useState<
     { width: number; tag: string; id: string; className: string }[]
@@ -61,8 +67,6 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   const debugOverflow = useMemo(
     () => {
-      if (import.meta.env.DEV) return true;
-
       const fromSearch = new URLSearchParams(location.search).get("debugOverflow") === "1";
       if (fromSearch) return true;
 
@@ -89,10 +93,23 @@ export function Shell({ children }: { children: React.ReactNode }) {
   // Lock body scroll when menu open
   useEffect(() => {
     if (!open) return;
-    const prev = document.body.style.overflow;
+    const prev = {
+      htmlOverflow: document.documentElement.style.overflow,
+      overflow: document.body.style.overflow,
+      paddingRight: document.body.style.paddingRight,
+      width: document.body.style.width,
+    };
+
+    const scrollbarW = window.innerWidth - document.documentElement.clientWidth;
+    document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
+    document.body.style.width = "100%";
+    if (scrollbarW > 0) document.body.style.paddingRight = `${scrollbarW}px`;
     return () => {
-      document.body.style.overflow = prev;
+      document.documentElement.style.overflow = prev.htmlOverflow;
+      document.body.style.overflow = prev.overflow;
+      document.body.style.paddingRight = prev.paddingRight;
+      document.body.style.width = prev.width;
     };
   }, [open]);
 
@@ -154,6 +171,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
     if (!debugOverflow) return;
     const t = window.setTimeout(() => {
       const vw = document.documentElement.clientWidth;
+      const docOverflow = document.documentElement.scrollWidth - vw;
+      if (docOverflow <= 1) {
+        setOverflowOffenders([]);
+        return;
+      }
       const offenders = Array.from(document.querySelectorAll("body *"))
         .map((el) => ({ el, w: (el as HTMLElement).scrollWidth }))
         .filter((x) => x.w > vw)
@@ -219,6 +241,98 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   const showMobileCta =
     !open && !location.pathname.startsWith("/admin") && location.pathname !== "/book";
+
+  useEffect(() => {
+    if (!showMobileCta) {
+      setMobileCtaEligible(false);
+      setMobileCtaVisible(false);
+      return;
+    }
+
+    const mq = window.matchMedia?.("(max-width: 767px)");
+    if (!mq) {
+      setMobileCtaEligible(false);
+      setMobileCtaVisible(false);
+      return;
+    }
+
+    const threshold = 96;
+    let raf = 0;
+
+    const compute = () => {
+      const isMobile = mq.matches;
+      if (!isMobile) {
+        setMobileCtaEligible(false);
+        setMobileCtaVisible(false);
+        return;
+      }
+
+      const scrollH = document.documentElement.scrollHeight;
+      const winH = window.innerHeight;
+      const scrollable = scrollH > winH + 24;
+      setMobileCtaEligible(scrollable);
+
+      if (!scrollable) {
+        setMobileCtaVisible(false);
+        return;
+      }
+
+      setMobileCtaVisible(window.scrollY > threshold);
+    };
+
+    const onScroll = () => {
+      window.cancelAnimationFrame(raf);
+      raf = window.requestAnimationFrame(compute);
+    };
+
+    const onResize = () => {
+      window.cancelAnimationFrame(raf);
+      raf = window.requestAnimationFrame(compute);
+    };
+
+    compute();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onResize);
+    mq.addEventListener?.("change", onResize);
+
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+      mq.removeEventListener?.("change", onResize);
+    };
+  }, [showMobileCta, location.pathname]);
+
+  useEffect(() => {
+    if (!showMobileCta || !mobileCtaEligible) {
+      setFooterInView(false);
+      return;
+    }
+
+    const mq = window.matchMedia?.("(max-width: 767px)");
+    if (!mq?.matches) {
+      setFooterInView(false);
+      return;
+    }
+
+    const el = footerRef.current;
+    if (!el) return;
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        setFooterInView(!!entry?.isIntersecting);
+      },
+      {
+        root: null,
+        threshold: 0.01,
+        rootMargin: "0px 0px 160px 0px",
+      }
+    );
+
+    io.observe(el);
+    return () => io.disconnect();
+  }, [showMobileCta, mobileCtaEligible]);
 
   return (
     <div className="min-h-[100svh] bg-[#f7f7f8] overflow-x-clip flex flex-col">
@@ -307,8 +421,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <Container>
           <div
             className={clsx(
-              "py-10 sm:py-12 md:py-16 min-w-0",
-              showMobileCta ? "pb-[calc(env(safe-area-inset-bottom)+112px)]" : ""
+              "py-7 sm:py-12 md:py-16 min-w-0",
+              showMobileCta && mobileCtaEligible ? "pb-[calc(env(safe-area-inset-bottom)+112px)]" : ""
             )}
           >
             {children}
@@ -316,12 +430,21 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </Container>
       </main>
 
-      {showMobileCta && (
-        <div className="fixed inset-x-0 bottom-0 z-30 md:hidden">
+      {showMobileCta && mobileCtaEligible && (
+        <div
+          className={clsx(
+            "fixed inset-x-0 bottom-0 z-30 md:hidden",
+            "transition duration-300 ease-out will-change-transform motion-reduce:transition-none motion-reduce:transform-none",
+            mobileCtaVisible && !footerInView
+              ? "translate-y-0 opacity-100"
+              : "translate-y-6 opacity-0 pointer-events-none"
+          )}
+          aria-hidden={!(mobileCtaVisible && !footerInView)}
+        >
           <div className="pointer-events-none absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-[#f7f7f8] to-transparent" />
-          <div className="bg-[#f7f7f8]/95 backdrop-blur border-t border-black/5 px-2 sm:px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
+          <div className="bg-[#f7f7f8]/95 backdrop-blur border-t border-black/5 shadow-[0_-10px_30px_rgba(0,0,0,0.06)] px-2 sm:px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
             <div className="mx-auto max-w-6xl">
-              <Link to="/book" className="block">
+              <Link to="/book" className="block no-underline">
                 <Button className="w-full py-3 text-base rounded-2xl">Check availability</Button>
               </Link>
             </div>
@@ -330,11 +453,37 @@ export function Shell({ children }: { children: React.ReactNode }) {
       )}
 
       {/* FOOTER */}
-      <footer className="py-10 text-sm text-slate-500">
+      <footer ref={footerRef} className="mt-auto border-t border-black/5 bg-white/50">
         <Container>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div> {new Date().getFullYear()} Dylan’s Detailing Service</div>
-            <div>Wellington</div>
+          <div className="py-8 sm:py-10">
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+              <div className="min-w-0">
+                <div className="text-sm font-extrabold tracking-tight text-slate-900">
+                  Dylan’s <span className="text-indigo-600">Detailing</span> Service
+                </div>
+                <div className="mt-1 text-sm text-slate-500">Wellington • Studio drop-off</div>
+              </div>
+
+              <div className="flex flex-col sm:items-end gap-3">
+                <div className="flex flex-wrap gap-2">
+                  <Link to="/services" className="rounded-xl bg-white/70 ring-1 ring-black/5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-white">
+                    Packages
+                  </Link>
+                  <Link to="/book" className="rounded-xl bg-white/70 ring-1 ring-black/5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-white">
+                    Booking
+                  </Link>
+                  {isAdmin && (
+                    <Link to="/admin" className="rounded-xl bg-white/70 ring-1 ring-black/5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-white">
+                      Admin
+                    </Link>
+                  )}
+                </div>
+
+                <div className="text-xs text-slate-500">
+                  {new Date().getFullYear()} Dylan’s Detailing Service
+                </div>
+              </div>
+            </div>
           </div>
         </Container>
       </footer>
@@ -386,7 +535,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
               {/* Content */}
               <div className="px-5 pb-6 flex-1 overflow-y-auto">
-                <Link to="/book" className="block">
+                <Link to="/book" className="block no-underline">
                   <Button className="w-full py-4 text-base rounded-2xl">
                     Check availability
                   </Button>

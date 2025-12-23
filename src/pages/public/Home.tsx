@@ -332,10 +332,8 @@ export default function Home() {
             },
           ].map((x) => (
             <div key={x.t} className="rounded-3xl bg-white ring-1 ring-black/5 p-6">
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 h-10 w-10 rounded-2xl bg-indigo-600/10 text-indigo-700 ring-1 ring-indigo-600/15 grid place-items-center text-sm font-extrabold">
-                  {x.t.split(" ")[0].slice(0, 1)}
-                </div>
+              <div className="relative pl-5">
+                <div className="absolute left-0 top-2 bottom-2 w-1 rounded-full bg-gradient-to-b from-indigo-500/60 via-indigo-400/30 to-sky-400/60" />
                 <div className="min-w-0">
                   <div className="text-sm font-extrabold tracking-tight text-slate-900">{x.t}</div>
                   <div className="mt-2 text-sm text-slate-600">{x.d}</div>
@@ -383,12 +381,12 @@ export default function Home() {
                 (isMostPopular(p.code) ? "ring-2 ring-indigo-600/35" : "")
               }
             >
-              <div className="flex items-start justify-between gap-4 min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 min-w-0">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <div className="flex items-center gap-2 min-w-0">
                       <span className={"h-2.5 w-2.5 rounded-full bg-gradient-to-r shrink-0 " + accentClass(p.code)} />
-                      <div className="text-lg font-extrabold tracking-tight truncate">{p.title}</div>
+                      <div className="text-lg font-extrabold tracking-tight whitespace-normal break-normal hyphens-auto leading-tight">{p.title}</div>
                     </div>
                     {isMostPopular(p.code) && (
                       <span className="inline-flex items-center rounded-full bg-indigo-600 text-white px-2.5 py-1 text-xs font-extrabold">
@@ -399,9 +397,9 @@ export default function Home() {
                   <div className="mt-1 text-sm text-slate-600">{p.subtitle}</div>
                 </div>
 
-                <div className="shrink-0 text-right">
+                <div className="shrink-0 sm:text-right">
                   <div className="text-lg font-extrabold">From {fmtMoney(p.fromPriceCents)}</div>
-                  <div className="mt-2 text-xs text-slate-500">Time varies</div>
+                  <div className="mt-1 sm:mt-2 text-xs text-slate-500">Time varies</div>
                 </div>
               </div>
 
