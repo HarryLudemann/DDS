@@ -116,16 +116,13 @@ export default function AdminServices() {
         sort_order: Number(draft.sort_order ?? 0) || 0,
       };
 
-      let savedId = editingId;
-
       if (editingId) {
         const { error } = await supabase.from("services").update(payload).eq("id", editingId);
         if (error) throw error;
         setStatus("Service updated.");
       } else {
-        const { data: inserted, error } = await supabase.from("services").insert(payload).select("id").single();
+        const { error } = await supabase.from("services").insert(payload).select("id").single();
         if (error) throw error;
-        savedId = inserted.id;
         setStatus("Service created.");
       }
 

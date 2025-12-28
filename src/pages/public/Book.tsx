@@ -9,7 +9,6 @@ import { Pill } from "../../components/ui/Pill";
 import { Select } from "../../components/ui/Select";
 import { Textarea } from "../../components/ui/Textarea";
 import { useServices } from "../../hooks/useServices";
-import type { Service } from "../../types/db";
 import { amountsForCustomerPrice, GST_RATE, TAX_MODE, taxLabelShort } from "../../utils/tax";
 
 const WINDOWS = [
@@ -317,7 +316,7 @@ export default function Book() {
 
   // Auto-select the earliest day when availability loads (reduces clicks)
   useEffect(() => {
-    if (!selectedDay && grouped.length > 0) {
+    if (!selectedDay && grouped.length > 0 && grouped[0]) {
       setSelectedDay(grouped[0].dateKey);
     }
   }, [grouped, selectedDay]);
@@ -327,7 +326,10 @@ export default function Book() {
     if (!selectedDay) return;
     if (grouped.length === 0) return;
     if (grouped.some((g) => g.dateKey === selectedDay)) return;
-    setSelectedDay(grouped[0].dateKey);
+    const firstDay = grouped[0];
+    if (firstDay) {
+      setSelectedDay(firstDay.dateKey);
+    }
   }, [grouped, selectedDay]);
 
   const activeDay = useMemo(() => {
@@ -386,7 +388,12 @@ export default function Book() {
       setStartAt("");
       return;
     }
-    setStartAt((prev) => (prev && timesForSelectedWindow.includes(prev) ? prev : timesForSelectedWindow[0]));
+    const firstTime = timesForSelectedWindow[0];
+    if (!firstTime) {
+      setStartAt("");
+      return;
+    }
+    setStartAt((prev) => (prev && timesForSelectedWindow.includes(prev) ? prev : firstTime));
   }, [windowKey, timesForSelectedWindow]);
 
   const emailOk = email.trim() ? isValidEmail(email) : false;
