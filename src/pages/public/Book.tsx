@@ -576,7 +576,7 @@ export default function Book() {
   const visibleDays = grouped;
 
   return (
-    <div className="pb-[calc(env(safe-area-inset-bottom)+112px)] md:pb-0 space-y-6 min-h-screen">
+    <div className="pb-[calc(env(safe-area-inset-bottom)+140px)] md:pb-0 space-y-6 min-h-screen">
       <div className="relative overflow-hidden rounded-3xl bg-white ring-1 ring-black/5">
         <div className="absolute -top-20 -right-20 h-72 w-72 rounded-full bg-indigo-600/10 blur-2xl" />
         <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-sky-500/10 blur-2xl" />
@@ -690,10 +690,10 @@ export default function Book() {
                           <div className="absolute -right-20 -top-24 h-48 w-48 rounded-full bg-indigo-600/10 blur-2xl transition-opacity group-hover:opacity-100 opacity-70" />
 
                           <div className="p-5 sm:p-6">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0">
+                            <div className="flex items-start justify-between gap-4 sm:gap-3">
+                              <div className="min-w-0 flex-1 pr-2 sm:pr-0">
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <div className="flex items-center gap-2 min-w-0">
+                                  <div className="flex items-center gap-2 min-w-0 flex-1">
                                     <span className="h-2.5 w-2.5 rounded-full bg-indigo-600 shrink-0" />
                                     <div className="min-w-0 flex-1 text-base sm:text-lg font-extrabold tracking-tight text-slate-900 whitespace-normal break-normal hyphens-auto leading-tight">
                                       {s.title}
@@ -701,7 +701,7 @@ export default function Book() {
                                   </div>
                                 </div>
                                 {s.subtitle && (
-                                  <div className="mt-1 text-sm text-slate-600">{s.subtitle}</div>
+                                  <div className="mt-1.5 text-sm text-slate-600">{s.subtitle}</div>
                                 )}
                               </div>
 
@@ -723,7 +723,7 @@ export default function Book() {
                                     </div>
                                   </div>
                                 )}
-                                <div className="text-sm font-extrabold text-slate-900">
+                                <div className="text-sm font-extrabold text-slate-900 whitespace-nowrap">
                                   From {fmtMoney(s.price_cents)}
                                   <span className="ml-2 text-[11px] font-extrabold text-slate-500">{taxLabelShort()}</span>
                                 </div>
@@ -1181,7 +1181,7 @@ export default function Book() {
 
       <div className="fixed inset-x-0 bottom-0 z-50 md:hidden">
         <div className="pointer-events-none absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-[#f7f7f8] to-transparent" />
-        <div className="bg-[#f7f7f8]/95 backdrop-blur border-t border-black/5 px-2 sm:px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
+        <div className="bg-[#f7f7f8]/95 backdrop-blur border-t border-black/5 px-4 sm:px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
           <div className="mx-auto max-w-6xl pointer-events-auto">
             <div className="rounded-3xl bg-white border border-slate-200 shadow-sm">
               <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">

@@ -514,7 +514,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       )}
 
       {/* FOOTER */}
-      <footer ref={footerRef} className="mt-auto border-t border-black/5 bg-white/50">
+      <footer ref={footerRef} className={clsx("mt-auto border-t border-black/5 bg-white/50", location.pathname === "/book" && "hidden md:block")}>
         <Container>
           <div className="py-8 sm:py-10">
             <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
