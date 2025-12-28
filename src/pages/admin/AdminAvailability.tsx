@@ -157,21 +157,26 @@ export default function AdminAvailability() {
       }
 
       // Save day-by-day (simple + reliable)
+      // Strategy: Deactivate all rules for each day first, then activate the ones we want
+      // This prevents unique constraint violations and RLS recursion
       for (const d of DAYS) {
         const row = draft[d.key];
 
+        // Step 1: Deactivate ALL active rules for this day-of-week
+        // This must happen first to avoid unique constraint issues
+        const { error: deactivateError } = await supabase
+          .from("availability_rules")
+          .update({ active: false })
+          .eq("dow", d.key)
+          .eq("active", true);
+        if (deactivateError) throw deactivateError;
+
+        // Step 2: If this day is disabled, we're done (already deactivated above)
         if (!row.enabled) {
-          // IMPORTANT: deactivate *all* active rules for this weekday.
-          // Otherwise older active rows can remain and still be used by the booking RPC.
-          const { error } = await supabase
-            .from("availability_rules")
-            .update({ active: false })
-            .eq("dow", d.key)
-            .eq("active", true);
-          if (error) throw error;
           continue;
         }
 
+        // Step 3: Activate the rule for this day
         const payload = {
           dow: d.key,
           start_time: timeToDb(row.start),
@@ -182,39 +187,20 @@ export default function AdminAvailability() {
         };
 
         if (row.id) {
-          // Update existing rule
-          // First deactivate other active rules for this dow (excluding the one we're updating)
-          const { error: deactivateOthers } = await supabase
-            .from("availability_rules")
-            .update({ active: false })
-            .eq("dow", d.key)
-            .neq("id", row.id)
-            .eq("active", true);
-          if (deactivateOthers) throw deactivateOthers;
-
-          // Now update the rule (safe since others are inactive)
-          const { error } = await supabase
+          // Update existing rule (safe: all other rules for this dow are now inactive)
+          const { error: updateError } = await supabase
             .from("availability_rules")
             .update(payload)
             .eq("id", row.id);
-          if (error) throw error;
+          if (updateError) throw updateError;
         } else {
-          // Insert new rule
-          // First deactivate all existing active rules for this dow
-          const { error: deactivateExisting } = await supabase
-            .from("availability_rules")
-            .update({ active: false })
-            .eq("dow", d.key)
-            .eq("active", true);
-          if (deactivateExisting) throw deactivateExisting;
-
-          // Now insert the new rule (safe since others are inactive)
-          const { data: inserted, error } = await supabase
+          // Insert new rule (safe: all other rules for this dow are now inactive)
+          const { data: inserted, error: insertError } = await supabase
             .from("availability_rules")
             .insert(payload)
             .select("id")
             .single();
-          if (error) throw error;
+          if (insertError) throw insertError;
 
           setDraft((prev) => ({
             ...prev,

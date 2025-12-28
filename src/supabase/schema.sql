@@ -299,9 +299,12 @@ alter table public.bookings
   where (status = 'confirmed');
 
 -- Helper: is admin?
+-- Marked as STABLE to prevent recursion in RLS policies
 create or replace function public.is_admin()
 returns boolean
 language sql stable
+security definer
+set search_path = public
 as $$
   select exists (
     select 1 from public.profiles p
