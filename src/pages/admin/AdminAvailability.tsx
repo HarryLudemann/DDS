@@ -182,14 +182,8 @@ export default function AdminAvailability() {
         };
 
         if (row.id) {
-          // Update existing latest rule
-          const { error } = await supabase
-            .from("availability_rules")
-            .update(payload)
-            .eq("id", row.id);
-          if (error) throw error;
-
-          // Ensure no other active rows exist for this weekday
+          // Update existing rule
+          // First deactivate other active rules for this dow (excluding the one we're updating)
           const { error: deactivateOthers } = await supabase
             .from("availability_rules")
             .update({ active: false })
@@ -197,8 +191,16 @@ export default function AdminAvailability() {
             .neq("id", row.id)
             .eq("active", true);
           if (deactivateOthers) throw deactivateOthers;
+
+          // Now update the rule (safe since others are inactive)
+          const { error } = await supabase
+            .from("availability_rules")
+            .update(payload)
+            .eq("id", row.id);
+          if (error) throw error;
         } else {
-          // Ensure a clean slate: only one active rule per weekday
+          // Insert new rule
+          // First deactivate all existing active rules for this dow
           const { error: deactivateExisting } = await supabase
             .from("availability_rules")
             .update({ active: false })
@@ -206,7 +208,7 @@ export default function AdminAvailability() {
             .eq("active", true);
           if (deactivateExisting) throw deactivateExisting;
 
-          // Insert new rule
+          // Now insert the new rule (safe since others are inactive)
           const { data: inserted, error } = await supabase
             .from("availability_rules")
             .insert(payload)

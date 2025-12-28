@@ -369,7 +369,16 @@ as $$
       select ar.start_time, ar.end_time
       from public.availability_rules ar
       where ar.active = true
-        and ar.dow = extract(dow from day)::int
+        -- Extract day of week in NZ timezone using make_timestamptz
+        -- This creates a timestamptz at noon NZ time for the given date
+        -- PostgreSQL dow: 0=Sunday, 1=Monday, ..., 6=Saturday
+        and ar.dow = extract(dow from make_timestamptz(
+          extract(year from day)::int,
+          extract(month from day)::int,
+          extract(day from day)::int,
+          12, 0, 0,
+          'Pacific/Auckland'
+        ))::int
         and ar.effective_from <= day
         and (ar.effective_to is null or day <= ar.effective_to)
       order by ar.created_at desc
@@ -378,8 +387,25 @@ as $$
   ),
   windows as (
     select
-      (day::timestamp + start_time) at time zone 'Pacific/Auckland' as win_start,
-      (day::timestamp + end_time) at time zone 'Pacific/Auckland' as win_end
+      -- Construct timestamps in NZ timezone properly using make_timestamptz
+      make_timestamptz(
+        extract(year from day)::int,
+        extract(month from day)::int,
+        extract(day from day)::int,
+        extract(hour from start_time)::int,
+        extract(minute from start_time)::int,
+        0,
+        'Pacific/Auckland'
+      ) as win_start,
+      make_timestamptz(
+        extract(year from day)::int,
+        extract(month from day)::int,
+        extract(day from day)::int,
+        extract(hour from end_time)::int,
+        extract(minute from end_time)::int,
+        0,
+        'Pacific/Auckland'
+      ) as win_end
     from rules
   ),
   starts as (
