@@ -374,56 +374,66 @@ export default function Home() {
           desc="Clear inclusions and starting prices. Check availability in minutes."
         />
 
-        <div className="grid gap-5 lg:grid-cols-2">
+        <div className="grid gap-6 lg:grid-cols-2">
           {topServices.map((s) => (
             <Card
               key={s.id}
-              className="relative flex flex-col gap-5 overflow-hidden"
+              className="relative flex flex-col overflow-hidden group hover:shadow-lg transition-shadow duration-200"
             >
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 min-w-0">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="h-2.5 w-2.5 rounded-full bg-indigo-600 shrink-0" />
-                      <div className="text-lg font-extrabold tracking-tight whitespace-normal break-normal hyphens-auto leading-tight">{s.title}</div>
-                    </div>
-                  </div>
+              <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-indigo-600/5 blur-3xl transition-opacity group-hover:opacity-100 opacity-50" />
+              
+              <div className="relative p-6 sm:p-7 flex flex-col flex-1">
+                {/* Header Section */}
+                <div className="mb-5">
+                  <h3 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 leading-tight break-words mb-2">
+                    {s.title}
+                  </h3>
                   {s.subtitle && (
-                    <div className="mt-1 text-sm text-slate-600">{s.subtitle}</div>
+                    <div className="text-sm sm:text-base text-slate-600 break-words leading-relaxed">
+                      {s.subtitle}
+                    </div>
                   )}
                 </div>
 
-                <div className="shrink-0 sm:text-right">
-                  <div className="text-lg font-extrabold">
-                    From {fmtMoney(s.price_cents)}
-                    <span className="ml-2 text-xs font-extrabold text-slate-500">{taxLabelShort()}</span>
+                {/* Price and Duration */}
+                <div className="flex flex-wrap items-center justify-between gap-3 py-4 border-y border-slate-200/80 mb-5">
+                  <div className="flex items-baseline gap-2.5">
+                    <span className="text-lg sm:text-xl font-extrabold text-slate-900">
+                      From {fmtMoney(s.price_cents)}
+                    </span>
+                    <span className="text-xs font-semibold text-slate-500">{taxLabelShort()}</span>
                   </div>
-                  <div className="mt-1 sm:mt-2 text-xs text-slate-500">{s.duration_mins} mins</div>
+                  <Pill className="bg-slate-100 text-slate-700 text-xs font-semibold px-3 py-1">
+                    {s.duration_mins} mins
+                  </Pill>
                 </div>
-              </div>
 
-              {s.summary && (
-                <div className="text-sm text-slate-700">{s.summary}</div>
-              )}
+                {/* Summary */}
+                {s.summary && (
+                  <div className="mb-5 text-sm text-slate-700 leading-relaxed">{s.summary}</div>
+                )}
 
-              {s.includes && s.includes.length > 0 && (
-                <div className="rounded-2xl bg-slate-50 ring-1 ring-black/5 p-4">
-                  <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500">Top inclusions</div>
-                  <ul className="mt-3 space-y-2 text-sm text-slate-700">
-                    {s.includes.slice(0, 4).map((x, i) => (
-                      <li key={i} className="flex items-start gap-2">
-                        <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-indigo-600 shrink-0" />
-                        <span className="min-w-0">{x}</span>
-                      </li>
-                    ))}
-                  </ul>
+                {/* Includes */}
+                {s.includes && s.includes.length > 0 && (
+                  <div className="mb-6 rounded-xl bg-slate-50/80 ring-1 ring-slate-200/60 p-4">
+                    <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500 mb-3">Top inclusions</div>
+                    <ul className="space-y-2.5 text-sm text-slate-700">
+                      {s.includes.slice(0, 4).map((x, i) => (
+                        <li key={i} className="flex items-start gap-3">
+                          <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-indigo-600 shrink-0" />
+                          <span className="min-w-0 leading-relaxed">{x}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* CTA Button */}
+                <div className="mt-auto pt-2">
+                  <Link to={`/book?service=${encodeURIComponent(s.id)}`} className="block w-full">
+                    <Button className="w-full">Check availability</Button>
+                  </Link>
                 </div>
-              )}
-
-              <div className="mt-auto">
-                <Link to={`/book?service=${encodeURIComponent(s.id)}`} className="w-full">
-                  <Button className="w-full rounded-2xl py-3">Check availability</Button>
-                </Link>
               </div>
             </Card>
           ))}
