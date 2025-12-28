@@ -4,20 +4,37 @@ import { supabase } from "../../utils/supabase";
 import type { Service } from "../../types/db";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
+import { Input } from "../../components/ui/Input";
 import { Textarea } from "../../components/ui/Textarea";
 import { Page } from "../../components/layout/Page";
 import { fmtMoney } from "../../utils/format";
 import { clsx } from "clsx";
 
-type Draft = Partial<Service>;
+type Draft = Partial<Service> & {
+  includesText?: string;
+  idealForText?: string;
+};
 
 function toCents(v: string) {
   const n = Number(v);
   if (!Number.isFinite(n)) return 0;
   return Math.round(n * 100);
 }
+
 function fromCents(cents: number) {
   return ((cents ?? 0) / 100).toFixed(2);
+}
+
+function toLines(v: unknown): string {
+  if (Array.isArray(v)) return v.filter((x) => typeof x === "string").join("\n");
+  return "";
+}
+
+function parseLines(v: string): string[] {
+  return v
+    .split("\n")
+    .map((x) => x.trim())
+    .filter(Boolean);
 }
 
 export default function AdminServices() {
@@ -32,6 +49,10 @@ export default function AdminServices() {
     duration_mins: 60,
     price_cents: 0,
     sort_order: 0,
+    includes: [],
+    ideal_for: [],
+    includesText: "",
+    idealForText: "",
   });
 
   const isEditing = useMemo(() => !!editingId, [editingId]);
@@ -57,7 +78,16 @@ export default function AdminServices() {
 
   function resetForm() {
     setEditingId(null);
-    setDraft({ active: true, duration_mins: 60, price_cents: 0, sort_order: 0 });
+    setDraft({
+      active: true,
+      duration_mins: 60,
+      price_cents: 0,
+      sort_order: 0,
+      includes: [],
+      ideal_for: [],
+      includesText: "",
+      idealForText: "",
+    });
     setStatus(null);
   }
 
@@ -75,22 +105,35 @@ export default function AdminServices() {
 
       const payload = {
         title,
+        subtitle: (draft.subtitle ?? "").trim() || null,
+        summary: (draft.summary ?? "").trim() || null,
         description: (draft.description ?? "").trim() || null,
+        includes: parseLines(draft.includesText ?? ""),
+        ideal_for: parseLines(draft.idealForText ?? ""),
         duration_mins: duration,
         price_cents: price,
         active: !!draft.active,
         sort_order: Number(draft.sort_order ?? 0) || 0,
       };
 
+      let savedId = editingId;
+
       if (editingId) {
         const { error } = await supabase.from("services").update(payload).eq("id", editingId);
         if (error) throw error;
         setStatus("Service updated.");
       } else {
-        const { error } = await supabase.from("services").insert(payload);
+        const { data: inserted, error } = await supabase.from("services").insert(payload).select("id").single();
         if (error) throw error;
+        savedId = inserted.id;
         setStatus("Service created.");
       }
+
+      try {
+        window.localStorage.setItem("dds_services_updated_at", String(Date.now()));
+      } catch {
+      }
+      window.dispatchEvent(new Event("dds_services_updated"));
 
       resetForm();
       await load();
@@ -105,11 +148,17 @@ export default function AdminServices() {
     setEditingId(s.id);
     setDraft({
       title: s.title,
+      subtitle: s.subtitle ?? "",
+      summary: s.summary ?? "",
       description: s.description ?? "",
       duration_mins: s.duration_mins,
       price_cents: s.price_cents,
       active: s.active,
       sort_order: s.sort_order,
+      includes: s.includes ?? [],
+      ideal_for: s.ideal_for ?? [],
+      includesText: toLines(s.includes),
+      idealForText: toLines(s.ideal_for),
     });
     setStatus(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -143,7 +192,7 @@ export default function AdminServices() {
           <div className="min-w-0">
             <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 truncate">Services</h1>
             <p className="mt-1 text-sm text-slate-600">
-              Add/edit packages. Duration controls which booking start times are available.
+              Manage all your services. Edit titles, prices, durations, and what's included. Changes appear on the frontend immediately.
             </p>
           </div>
           <Link to="/admin">
@@ -171,20 +220,30 @@ export default function AdminServices() {
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="min-w-0">
-              <label className="text-sm font-semibold text-slate-700">Title</label>
-              <input
-                className="mt-2 w-full rounded-xl bg-slate-50 px-3 py-2 text-sm ring-1 ring-black/10 outline-none focus-visible:ring-4 focus-visible:ring-indigo-200"
+            <div className="min-w-0 sm:col-span-2">
+              <label className="text-sm font-semibold text-slate-700">Title *</label>
+              <Input
+                className="mt-2"
                 value={draft.title ?? ""}
                 onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
-                placeholder="e.g. Interior Detail"
+                placeholder="e.g. Full Detail Inside + Out"
               />
             </div>
 
             <div className="min-w-0">
-              <label className="text-sm font-semibold text-slate-700">Price (NZD)</label>
-              <input
-                className="mt-2 w-full rounded-xl bg-slate-50 px-3 py-2 text-sm ring-1 ring-black/10 outline-none focus-visible:ring-4 focus-visible:ring-indigo-200"
+              <label className="text-sm font-semibold text-slate-700">Subtitle</label>
+              <Input
+                className="mt-2"
+                value={draft.subtitle ?? ""}
+                onChange={(e) => setDraft((d) => ({ ...d, subtitle: e.target.value }))}
+                placeholder="e.g. Full reset (3–5 hrs)"
+              />
+            </div>
+
+            <div className="min-w-0">
+              <label className="text-sm font-semibold text-slate-700">Price (NZD) *</label>
+              <Input
+                className="mt-2"
                 inputMode="decimal"
                 value={fromCents(Number(draft.price_cents ?? 0))}
                 onChange={(e) => setDraft((d) => ({ ...d, price_cents: toCents(e.target.value) }))}
@@ -193,9 +252,9 @@ export default function AdminServices() {
             </div>
 
             <div className="min-w-0">
-              <label className="text-sm font-semibold text-slate-700">Duration (minutes)</label>
-              <input
-                className="mt-2 w-full rounded-xl bg-slate-50 px-3 py-2 text-sm ring-1 ring-black/10 outline-none focus-visible:ring-4 focus-visible:ring-indigo-200"
+              <label className="text-sm font-semibold text-slate-700">Duration (minutes) *</label>
+              <Input
+                className="mt-2"
                 type="number"
                 min={15}
                 step={15}
@@ -206,8 +265,8 @@ export default function AdminServices() {
 
             <div className="min-w-0">
               <label className="text-sm font-semibold text-slate-700">Sort order</label>
-              <input
-                className="mt-2 w-full rounded-xl bg-slate-50 px-3 py-2 text-sm ring-1 ring-black/10 outline-none focus-visible:ring-4 focus-visible:ring-indigo-200"
+              <Input
+                className="mt-2"
                 type="number"
                 step={1}
                 value={Number(draft.sort_order ?? 0)}
@@ -217,14 +276,49 @@ export default function AdminServices() {
           </div>
 
           <div className="min-w-0">
-            <label className="text-sm font-semibold text-slate-700">Description</label>
+            <label className="text-sm font-semibold text-slate-700">Summary</label>
+            <Textarea
+              className="mt-2"
+              rows={2}
+              value={draft.summary ?? ""}
+              onChange={(e) => setDraft((d) => ({ ...d, summary: e.target.value }))}
+              placeholder="Brief description shown on service cards"
+            />
+          </div>
+
+          <div className="min-w-0">
+            <label className="text-sm font-semibold text-slate-700">Full Description</label>
             <Textarea
               className="mt-2"
               rows={4}
               value={draft.description ?? ""}
               onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
-              placeholder="What’s included…"
+              placeholder="Detailed description of what's included"
             />
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="min-w-0">
+              <label className="text-sm font-semibold text-slate-700">What's Included (one per line)</label>
+              <Textarea
+                className="mt-2"
+                rows={6}
+                value={draft.includesText ?? ""}
+                onChange={(e) => setDraft((d) => ({ ...d, includesText: e.target.value }))}
+                placeholder="Hand wash&#10;Wheels / tyres clean&#10;Interior vacuum"
+              />
+            </div>
+
+            <div className="min-w-0">
+              <label className="text-sm font-semibold text-slate-700">Ideal For (one per line)</label>
+              <Textarea
+                className="mt-2"
+                rows={6}
+                value={draft.idealForText ?? ""}
+                onChange={(e) => setDraft((d) => ({ ...d, idealForText: e.target.value }))}
+                placeholder="Regular customers&#10;Pre-sale&#10;Busy people"
+              />
+            </div>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -259,12 +353,12 @@ export default function AdminServices() {
             {rows.map((s) => (
               <div key={s.id} className="p-5 min-w-0">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 min-w-0">
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 min-w-0">
                       <div className="text-sm font-extrabold text-slate-900 truncate">{s.title}</div>
                       <span
                         className={clsx(
-                          "text-xs font-semibold rounded-full px-2 py-1",
+                          "text-xs font-semibold rounded-full px-2 py-1 shrink-0",
                           s.active ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"
                         )}
                       >
@@ -272,12 +366,23 @@ export default function AdminServices() {
                       </span>
                     </div>
 
+                    {s.subtitle && (
+                      <div className="mt-1 text-sm text-slate-600">{s.subtitle}</div>
+                    )}
+
                     <div className="mt-1 text-sm text-slate-600">
                       {fmtMoney(s.price_cents)} · {s.duration_mins} mins · Sort {s.sort_order}
                     </div>
 
-                    {s.description && (
-                      <div className="mt-2 text-sm text-slate-700 break-words">{s.description}</div>
+                    {s.summary && (
+                      <div className="mt-2 text-sm text-slate-700 break-words">{s.summary}</div>
+                    )}
+
+                    {s.includes && s.includes.length > 0 && (
+                      <div className="mt-2 text-xs text-slate-600">
+                        Includes: {s.includes.slice(0, 3).join(", ")}
+                        {s.includes.length > 3 && ` +${s.includes.length - 3} more`}
+                      </div>
                     )}
                   </div>
 

@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import { clsx } from "../../utils/format";
 import { Button } from "../ui/Button";
 import { supabase } from "../../utils/supabase";
+import { CookieConsent } from "../CookieConsent";
 
 function Container({ children }: { children: React.ReactNode }) {
   return (
@@ -81,7 +82,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   );
 
   const nav = [
-    { to: "/services", label: "Packages", sub: "Pricing and inclusions" },
+    { to: "/services", label: "Services", sub: "Pricing and inclusions" },
     { to: "/book", label: "Booking", sub: "Pick a day + drop-off window" },
   ];
 
@@ -89,6 +90,17 @@ export function Shell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setOpen(false);
   }, [location.pathname]);
+
+  // Scroll to top on navigation - ensure it happens reliably
+  useEffect(() => {
+    // Use requestAnimationFrame to ensure DOM is ready
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      // Also try document.documentElement for better compatibility
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    });
+  }, [location.pathname, location.search]);
 
   // Lock body scroll when menu open
   useEffect(() => {
@@ -353,6 +365,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       )}
+
+      <CookieConsent offsetBottomPx={showMobileCta && mobileCtaEligible ? 112 : 0} />
       {/* HEADER */}
       <header className="sticky top-0 z-40 bg-[#f7f7f8]/90 backdrop-blur">
         <div className="border-b border-black/5">
@@ -465,18 +479,41 @@ export function Shell({ children }: { children: React.ReactNode }) {
               </div>
 
               <div className="flex flex-col sm:items-end gap-3">
-                <div className="flex flex-wrap gap-2">
-                  <Link to="/services" className="rounded-xl bg-white/70 ring-1 ring-black/5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-white">
-                    Packages
+                <div className="flex flex-wrap gap-2 sm:justify-end">
+                  <Link
+                    to="/services"
+                    className="rounded-xl bg-slate-900/5 px-3 py-2 text-xs font-semibold text-slate-800 visited:text-slate-800 hover:bg-slate-900/10"
+                  >
+                    Services
                   </Link>
-                  <Link to="/book" className="rounded-xl bg-white/70 ring-1 ring-black/5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-white">
+                  <Link
+                    to="/book"
+                    className="rounded-xl bg-slate-900/5 px-3 py-2 text-xs font-semibold text-slate-800 visited:text-slate-800 hover:bg-slate-900/10"
+                  >
                     Booking
                   </Link>
                   {isAdmin && (
-                    <Link to="/admin" className="rounded-xl bg-white/70 ring-1 ring-black/5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-white">
+                    <Link
+                      to="/admin"
+                      className="rounded-xl bg-slate-900/5 px-3 py-2 text-xs font-semibold text-slate-800 visited:text-slate-800 hover:bg-slate-900/10"
+                    >
                       Admin
                     </Link>
                   )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 sm:justify-end text-xs font-semibold text-slate-500">
+                  <Link to="/privacy" className="text-slate-500 visited:text-slate-500 hover:text-slate-700">
+                    Privacy Policy
+                  </Link>
+                  <span aria-hidden="true" className="text-slate-300">•</span>
+                  <Link to="/cookies" className="text-slate-500 visited:text-slate-500 hover:text-slate-700">
+                    Cookie Policy
+                  </Link>
+                  <span aria-hidden="true" className="text-slate-300">•</span>
+                  <Link to="/terms" className="text-slate-500 visited:text-slate-500 hover:text-slate-700">
+                    Terms
+                  </Link>
                 </div>
 
                 <div className="text-xs text-slate-500">
@@ -544,7 +581,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 <div className="mt-5 space-y-3">
                   <MenuCard
                     to="/services"
-                    title="Packages"
+                    title="Services"
                     subtitle="Pricing and inclusions"
                     onClick={() => setOpen(false)}
                   />

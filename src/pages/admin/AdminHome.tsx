@@ -22,24 +22,12 @@ export default function AdminHome() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Card className="p-6 space-y-3">
-            <div className="text-sm font-extrabold text-slate-900">Packages</div>
-            <div className="text-sm text-slate-600">
-              Edit package names, pricing, and inclusions.
-            </div>
-            <Link to="/admin/packages">
-              <Button className="mt-2">Edit packages</Button>
-            </Link>
-          </Card>
-
-          <Card className="p-6 space-y-3">
             <div className="text-sm font-extrabold text-slate-900">Services</div>
             <div className="text-sm text-slate-600">
-              Set service durations (controls booking availability).
+              Manage all your services. Edit titles, prices, durations, and what's included.
             </div>
             <Link to="/admin/services">
-              <Button className="mt-2" variant="secondary">
-                Edit services
-              </Button>
+              <Button className="mt-2">Manage services</Button>
             </Link>
           </Card>
 

@@ -139,6 +139,12 @@ export default function AdminPackages() {
       return;
     }
 
+    try {
+      window.localStorage.setItem("dds_packages_updated_at", String(Date.now()));
+    } catch {
+    }
+    window.dispatchEvent(new Event("dds_packages_updated"));
+
     const { data: pkgData, error: pkgErr } = await supabase
       .from("packages")
       .select("code,title,subtitle,summary,includes,ideal_for,from_price_cents,active,service_id")

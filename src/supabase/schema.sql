@@ -54,11 +54,15 @@ select u.id, false
 from auth.users u
 on conflict (id) do nothing;
 
--- Services
+-- Services (unified - combines packages and services)
 create table if not exists public.services (
   id uuid primary key default gen_random_uuid(),
   title text not null,
+  subtitle text,
+  summary text,
   description text,
+  includes text[] not null default '{}',
+  ideal_for text[] not null default '{}',
   duration_mins integer not null check (duration_mins >= 15),
   price_cents integer not null default 0 check (price_cents >= 0),
   active boolean not null default true,
@@ -69,13 +73,53 @@ create table if not exists public.services (
 do $$
 begin
   if not exists (select 1 from public.services) then
-    insert into public.services (title, duration_mins, price_cents, active, sort_order)
+    insert into public.services (title, subtitle, summary, description, includes, ideal_for, duration_mins, price_cents, active, sort_order)
     values
-      ('Express Wash + Vac', 60, 9000, true, 10),
-      ('Maintenance Detail', 120, 16000, true, 20),
-      ('Full Detail Inside + Out', 240, 35000, true, 30),
-      ('Deep Clean / Restoration Detail', 420, 49500, true, 40),
-      ('Wellington Protection Package', 360, 45000, true, 50);
+      (
+        'Express Wash + Vac',
+        'Quick turnaround (45–75 min)',
+        'A fast wash + tidy-up for busy weeks. Starting price varies by vehicle size.',
+        'A fast wash + tidy-up for busy weeks. Starting price varies by vehicle size.',
+        array['Hand wash','Wheels / tyres quick clean','Exterior windows','Quick interior vacuum + wipe of dash / console'],
+        array['Weekly / fortnightly customers','Busy people','Rideshare'],
+        60, 9000, true, 10
+      ),
+      (
+        'Maintenance Detail',
+        'Most popular (1.5–2.5 hrs)',
+        'For regular customers who want their car always nice. Starting price varies by vehicle size.',
+        'For regular customers who want their car always nice. Starting price varies by vehicle size.',
+        array['Thorough wash + wheels / arches','Door jambs','Full vacuum','Plastics wiped','Glass inside + out','Light interior detail','Optional spray sealant (1–3 months)'],
+        array['Regular customers','Keep it always nice'],
+        120, 16000, true, 20
+      ),
+      (
+        'Full Detail Inside + Out',
+        'Full reset (3–5 hrs)',
+        'The full reset for most one-off customers. Starting price varies by vehicle size + condition — Dylan confirms after a quick look (or photos).',
+        'The full reset for most one-off customers. Starting price varies by vehicle size + condition — Dylan confirms after a quick look (or photos).',
+        array['Full exterior wash + decon (bug / tar)','Wheels / arches','Interior detailed clean','Glass','Trim dressings','Short-term paint protection (sealant)'],
+        array['Pre-sale','Haven''t cleaned it in a while','Most one-off customers'],
+        240, 35000, true, 30
+      ),
+      (
+        'Deep Clean / Restoration Detail',
+        'Neglected vehicles (5–8+ hrs)',
+        'For pet hair, sand/mud, stains, kids, smokers, and heavy build-up. Pricing is inspection-based (confirmed after an in-person look).',
+        'For pet hair, sand/mud, stains, kids, smokers, and heavy build-up. Pricing is inspection-based (confirmed after an in-person look).',
+        array['Everything in Full Detail','Seats / carpets shampoo + extraction (as needed)','Heavy pet hair removal (as needed)','Deeper plastics / crevices','More intensive exterior decon'],
+        array['Pet hair','Sand/mud','Stains','Kids','Smokers'],
+        420, 49500, true, 40
+      ),
+      (
+        'Wellington Protection Package',
+        'Detail + longer protection (4–7 hrs)',
+        'Full Detail plus longer-lasting protection for Wellington conditions. Sealant packages start from $450 — entry ceramic starts from $900+ (varies by paint correction needs).',
+        'Full Detail plus longer-lasting protection for Wellington conditions. Sealant packages start from $450 — entry ceramic starts from $900+ (varies by paint correction needs).',
+        array['Full Detail Inside + Out','Paint sealant (6–12 months) or entry ceramic option','Glass treatment'],
+        array['Parking outside','Coastal commuters','Keep it easy to wash'],
+        360, 45000, true, 50
+      );
   end if;
 end $$;
 

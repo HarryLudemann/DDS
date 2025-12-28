@@ -4,12 +4,14 @@ import { Shell } from "./components/layout/Shell";
 import Home from "./pages/public/Home";
 import Services from "./pages/public/Services";
 import Book from "./pages/public/Book";
+import Privacy from "./pages/public/Privacy";
+import Cookies from "./pages/public/Cookies";
+import Terms from "./pages/public/Terms";
 
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminGate from "./pages/admin/AdminGate";
 import AdminHome from "./pages/admin/AdminHome";
 import AdminServices from "./pages/admin/AdminServices";
-import AdminPackages from "./pages/admin/AdminPackages";
 import AdminAvailability from "./pages/admin/AdminAvailability";
 import AdminBookings from "./pages/admin/AdminBookings";
 
@@ -22,6 +24,10 @@ export default function App() {
         <Route path="/services" element={<Services />} />
         <Route path="/book" element={<Book />} />
 
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/cookies" element={<Cookies />} />
+        <Route path="/terms" element={<Terms />} />
+
         <Route
           path="/admin/login" element={<AdminLogin />} />
 
@@ -33,15 +39,6 @@ export default function App() {
             </AdminGate>
           }
         />
-        <Route
-          path="/admin/packages"
-          element={
-            <AdminGate>
-              <AdminPackages />
-            </AdminGate>
-          }
-        />
-
         <Route
           path="/admin/services"
           element={

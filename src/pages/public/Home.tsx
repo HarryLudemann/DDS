@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { fmtMoney } from "../../utils/format";
-import { usePackages } from "../../hooks/usePackages";
-import { accentClass, isMostPopular } from "../../utils/packageUi";
+import { useServices } from "../../hooks/useServices";
+import { taxLabelShort } from "../../utils/tax";
 
 function SectionTitle({
   eyebrow,
@@ -39,7 +39,7 @@ function Pill({ children }: { children: React.ReactNode }) {
 }
 
 export default function Home() {
-  const { packages } = usePackages();
+  const { services } = useServices();
   const [activeResult, setActiveResult] = useState<
     | null
     | {
@@ -57,7 +57,7 @@ export default function Home() {
 
   const modalScrollRef = useRef<HTMLDivElement | null>(null);
 
-  const topPackages = useMemo(() => packages, [packages]);
+  const topServices = useMemo(() => services.slice(0, 3), [services]);
 
   useEffect(() => {
     if (!activeResult) return;
@@ -123,7 +123,7 @@ export default function Home() {
               </h1>
 
               <p className="mt-4 text-base sm:text-lg text-slate-600 max-w-prose">
-                Choose a package, pick a day + drop-off window, and you’re in. Add notes for any priority areas — Dylan confirms the exact time after booking.
+                Choose a service, pick a day + drop-off window, and you're in. Add notes for any priority areas — Dylan confirms the exact time after booking.
               </p>
 
               <div className="mt-6 flex flex-col sm:flex-row gap-3">
@@ -150,7 +150,7 @@ export default function Home() {
 
                 <div className="mt-5 grid gap-3">
                   <div className="rounded-2xl bg-white/10 ring-1 ring-white/10 p-4">
-                    <div className="text-sm font-extrabold">Pick a package</div>
+                    <div className="text-sm font-extrabold">Pick a service</div>
                     <div className="mt-1 text-sm text-white/80">Clear inclusions.</div>
                   </div>
                   <div className="rounded-2xl bg-white/10 ring-1 ring-white/10 p-4">
@@ -309,13 +309,13 @@ export default function Home() {
         <SectionTitle
           eyebrow="Why DDS"
           title="Detailing that’s built to be consistent"
-          desc="The focus is simple: clear packages, careful work, and tidy finishing — without the back-and-forth."
+          desc="The focus is simple: clear services, careful work, and tidy finishing — without the back-and-forth."
         />
 
         <div className="grid gap-4 md:grid-cols-2">
           {[ 
             {
-              t: "Clear packages, clear outcomes",
+              t: "Clear services, clear outcomes",
               d: "Pricing and inclusions are laid out up front so you know what you’re booking before you choose a day + drop-off window.",
             },
             {
@@ -348,7 +348,7 @@ export default function Home() {
             <div className="min-w-0">
               <div className="text-sm font-extrabold">Not sure what to book?</div>
               <p className="mt-2 text-sm text-white/80 max-w-prose">
-                Start with the closest package — leave notes about any priority areas. Dylan will confirm details after booking.
+                Start with the closest service — leave notes about any priority areas. Dylan will confirm details after booking.
               </p>
             </div>
             <div className="shrink-0 w-full md:w-auto flex flex-col sm:flex-row gap-2">
@@ -358,7 +358,9 @@ export default function Home() {
                 </Button>
               </Link>
               <Link to="/book" className="w-full md:w-auto">
-                <Button className="w-full md:w-auto rounded-2xl px-6 py-3">Check availability</Button>
+                <Button variant="inverted" className="w-full md:w-auto rounded-2xl px-6 py-3 ring-1 ring-white/15">
+                  Check availability
+                </Button>
               </Link>
             </div>
           </div>
@@ -367,58 +369,59 @@ export default function Home() {
 
       <section className="space-y-6">
         <SectionTitle
-          eyebrow="Packages"
-          title="Packages"
+          eyebrow="Services"
+          title="Services"
           desc="Clear inclusions and starting prices. Check availability in minutes."
         />
 
         <div className="grid gap-5 lg:grid-cols-2">
-          {topPackages.map((p) => (
+          {topServices.map((s) => (
             <Card
-              key={p.code}
-              className={
-                "relative flex flex-col gap-5 overflow-hidden " +
-                (isMostPopular(p.code) ? "ring-2 ring-indigo-600/35" : "")
-              }
+              key={s.id}
+              className="relative flex flex-col gap-5 overflow-hidden"
             >
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 min-w-0">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className={"h-2.5 w-2.5 rounded-full bg-gradient-to-r shrink-0 " + accentClass(p.code)} />
-                      <div className="text-lg font-extrabold tracking-tight whitespace-normal break-normal hyphens-auto leading-tight">{p.title}</div>
+                      <span className="h-2.5 w-2.5 rounded-full bg-indigo-600 shrink-0" />
+                      <div className="text-lg font-extrabold tracking-tight whitespace-normal break-normal hyphens-auto leading-tight">{s.title}</div>
                     </div>
-                    {isMostPopular(p.code) && (
-                      <span className="inline-flex items-center rounded-full bg-indigo-600 text-white px-2.5 py-1 text-xs font-extrabold">
-                        Most popular
-                      </span>
-                    )}
                   </div>
-                  <div className="mt-1 text-sm text-slate-600">{p.subtitle}</div>
+                  {s.subtitle && (
+                    <div className="mt-1 text-sm text-slate-600">{s.subtitle}</div>
+                  )}
                 </div>
 
                 <div className="shrink-0 sm:text-right">
-                  <div className="text-lg font-extrabold">From {fmtMoney(p.fromPriceCents)}</div>
-                  <div className="mt-1 sm:mt-2 text-xs text-slate-500">Time varies</div>
+                  <div className="text-lg font-extrabold">
+                    From {fmtMoney(s.price_cents)}
+                    <span className="ml-2 text-xs font-extrabold text-slate-500">{taxLabelShort()}</span>
+                  </div>
+                  <div className="mt-1 sm:mt-2 text-xs text-slate-500">{s.duration_mins} mins</div>
                 </div>
               </div>
 
-              <div className="text-sm text-slate-700">{p.summary}</div>
+              {s.summary && (
+                <div className="text-sm text-slate-700">{s.summary}</div>
+              )}
 
-              <div className="rounded-2xl bg-slate-50 ring-1 ring-black/5 p-4">
-                <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500">Top inclusions</div>
-                <ul className="mt-3 space-y-2 text-sm text-slate-700">
-                  {p.includes.slice(0, 4).map((x) => (
-                    <li key={x} className="flex items-start gap-2">
-                      <span className={"mt-1.5 h-1.5 w-1.5 rounded-full bg-gradient-to-r " + accentClass(p.code)} />
-                      <span className="min-w-0">{x}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              {s.includes && s.includes.length > 0 && (
+                <div className="rounded-2xl bg-slate-50 ring-1 ring-black/5 p-4">
+                  <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500">Top inclusions</div>
+                  <ul className="mt-3 space-y-2 text-sm text-slate-700">
+                    {s.includes.slice(0, 4).map((x, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-indigo-600 shrink-0" />
+                        <span className="min-w-0">{x}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               <div className="mt-auto">
-                <Link to={`/book?package=${encodeURIComponent(String(p.code))}`} className="w-full">
+                <Link to={`/book?service=${encodeURIComponent(s.id)}`} className="w-full">
                   <Button className="w-full rounded-2xl py-3">Check availability</Button>
                 </Link>
               </div>
@@ -429,7 +432,7 @@ export default function Home() {
         <div className="pt-2">
           <Link to="/services">
             <Button variant="secondary" className="rounded-2xl px-6 py-3">
-              See packages + inclusions
+              See all services + inclusions
             </Button>
           </Link>
         </div>
@@ -446,15 +449,35 @@ export default function Home() {
           {[
             {
               q: "Do you offer mobile detailing?",
-              a: "No — drop-off only. This helps keep results consistent and high-quality.",
+              a: "No — this is studio drop-off only. A controlled setup helps keep results consistent and avoids weather interruptions.",
             },
             {
-              q: "How do bookings work for longer packages?",
-              a: "You choose a package first, then pick a day + window and select an available time inside it. Behind the scenes, the system only offers options that fit inside working hours and don’t overlap other bookings.",
+              q: "How does booking work?",
+              a: "Choose a service, pick a day + preferred drop-off window, and submit your details. No payment is taken online — Dylan will message you to confirm the exact drop-off time and final details.",
             },
             {
-              q: "What info do I need to provide?",
-              a: "Name and email are required. Phone, vehicle and notes are optional but helpful.",
+              q: "How long does it take?",
+              a: "Times vary by service, vehicle size, and condition. After booking, you'll get a confirmed drop-off time and a realistic timeframe for pickup.",
+            },
+            {
+              q: "What’s included in the price?",
+              a: "Each service lists the key inclusions and a starting price. Final pricing can change for larger vehicles or heavy soiling — if anything needs an inspection-based quote, you'll be contacted first.",
+            },
+            {
+              q: "Is GST included?",
+              a: "Yes — where GST applies, displayed prices are shown in NZD with GST indicated. If a final quote is required, it will be confirmed with you before any work begins.",
+            },
+            {
+              q: "Do I need to do anything before dropping the car off?",
+              a: "If possible, remove personal items and anything fragile. If there are priority areas (pet hair, stains, sand, child seats), add a note during booking so the time estimate is accurate.",
+            },
+            {
+              q: "What’s your cancellation / reschedule policy?",
+              a: "Life happens — if you need to cancel or reschedule, please message as early as you can so the slot can be offered to someone else.",
+            },
+            {
+              q: "What details do I need to provide?",
+              a: "Name and email are required. Phone, vehicle size, and notes are strongly recommended so the booking can be confirmed quickly and quoted correctly.",
             },
           ].map((item) => (
             <details
@@ -472,7 +495,7 @@ export default function Home() {
 
       {activeResult && (
         <div
-          className="fixed inset-0 z-50 overflow-y-auto overscroll-contain"
+          className="fixed inset-0 z-50 overflow-hidden"
           role="dialog"
           aria-modal="true"
           aria-label={activeResult.title}
@@ -485,7 +508,10 @@ export default function Home() {
           />
 
           <div className="relative flex min-h-[100svh] items-start justify-center p-3 sm:items-center sm:p-6">
-            <div className="relative w-full max-w-5xl overflow-hidden rounded-3xl bg-white shadow-2xl">
+            <div
+              ref={modalScrollRef}
+              className="relative w-full max-w-5xl max-h-[calc(100svh-24px)] overflow-y-auto [-webkit-overflow-scrolling:touch] overscroll-contain rounded-3xl bg-white shadow-2xl"
+            >
               <button
                 type="button"
                 aria-label="Close"
@@ -518,7 +544,7 @@ export default function Home() {
                 </div>
 
                 <div className="lg:col-span-7">
-                  <div ref={modalScrollRef} className="max-h-[72svh] lg:max-h-[640px] overflow-y-auto p-5 sm:p-7">
+                  <div className="p-5 sm:p-7">
                     <div className="flex flex-wrap gap-2">
                       <span className="inline-flex items-center rounded-full bg-slate-100 text-slate-700 ring-1 ring-black/5 px-3 py-1 text-xs font-semibold">
                         Wellington
@@ -571,7 +597,7 @@ export default function Home() {
                     <div className="mt-6 flex flex-col sm:flex-row gap-2">
                       <Link to="/services" className="w-full sm:w-auto" onClick={() => setActiveResult(null)}>
                         <Button variant="secondary" className="w-full sm:w-auto rounded-2xl px-6 py-3">
-                          View packages
+                          View services
                         </Button>
                       </Link>
                       <Link to="/book" className="w-full sm:w-auto" onClick={() => setActiveResult(null)}>
@@ -580,7 +606,7 @@ export default function Home() {
                     </div>
 
                     <div className="mt-4 text-xs text-slate-500">
-                      Tip: choose the closest package — you can add notes and Dylan will confirm details after booking.
+                      Tip: choose the closest service — you can add notes and Dylan will confirm details after booking.
                     </div>
                   </div>
                 </div>

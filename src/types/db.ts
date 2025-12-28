@@ -20,6 +20,7 @@ export type Booking = {
   customer_phone: string | null;
   vehicle: string | null;
   notes: string | null;
+  meta: Record<string, any>;
   status: "confirmed" | "cancelled";
   created_at: string;
 };
@@ -28,7 +29,11 @@ export type Booking = {
 export type Service = {
   id: string;
   title: string;
+  subtitle: string | null;
+  summary: string | null;
   description: string | null;
+  includes: string[];
+  ideal_for: string[];
   duration_mins: number;
   price_cents: number;
   active: boolean;

@@ -8,16 +8,9 @@ import { Input } from "../../components/ui/Input";
 import { Pill } from "../../components/ui/Pill";
 import { Select } from "../../components/ui/Select";
 import { Textarea } from "../../components/ui/Textarea";
-import { usePackages } from "../../hooks/usePackages";
-import { accentClass, isMostPopular } from "../../utils/packageUi";
-
-type Service = {
-  id: string;
-  title: string;
-  duration_mins: number;
-  active: boolean;
-  sort_order: number;
-};
+import { useServices } from "../../hooks/useServices";
+import type { Service } from "../../types/db";
+import { amountsForCustomerPrice, GST_RATE, TAX_MODE, taxLabelShort } from "../../utils/tax";
 
 const WINDOWS = [
   { key: "early", label: "Early (8–10am)", startMins: 8 * 60, endMins: 10 * 60 },
@@ -32,6 +25,7 @@ type WindowKey = (typeof WINDOWS)[number]["key"];
 type Step = 1 | 2 | 3 | 4;
 
 const AVAILABILITY_CACHE_TTL_MS = 60_000;
+const AVAILABILITY_REQUEST_TIMEOUT_MS = 15_000;
 const availabilityCache = new Map<string, { at: number; times: string[] }>();
 const availabilityInFlight = new Map<
   string,
@@ -81,10 +75,6 @@ function addMinutesIso(iso: string, mins: number): string | null {
   return new Date(d.getTime() + mins * 60_000).toISOString();
 }
 
-function normalizeKey(s: string) {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, "").trim();
-}
-
 function isValidEmail(v: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 }
@@ -121,18 +111,17 @@ export default function Book() {
   const [searchParams] = useSearchParams();
   const debug = searchParams.get("debug") === "1";
 
-  const { packages, getByCode } = usePackages();
-  const [services, setServices] = useState<Service[]>([]);
-  const [loadingServices, setLoadingServices] = useState(false);
+  const { services, getById, loading: loadingServices } = useServices();
 
   const [times, setTimes] = useState<string[]>([]);
   const [loadingTimes, setLoadingTimes] = useState(false);
   const [timesNonce, setTimesNonce] = useState(0);
+  const [availabilityStatus, setAvailabilityStatus] = useState<string | null>(null);
 
   const lastServiceIdRef = useRef<string>("");
 
   // Booking selections
-  const [packageCode, setPackageCode] = useState<string>("");
+  const [serviceId, setServiceId] = useState<string>("");
   const [selectedDay, setSelectedDay] = useState("");
   const [windowKey, setWindowKey] = useState<WindowKey | "">("");
   const [startAt, setStartAt] = useState("");
@@ -156,54 +145,21 @@ export default function Book() {
 
   const dateRailRef = useRef<HTMLDivElement | null>(null);
 
-  const selectedPackage = useMemo(() => getByCode(packageCode), [getByCode, packageCode]);
+  const selectedService = useMemo(() => getById(serviceId), [getById, serviceId]);
 
-  // Preselect package
+  // Preselect service
   useEffect(() => {
-    const preselect = searchParams.get("package");
-    const p = getByCode(preselect);
-    if (!p) return;
-    setPackageCode(p.code);
-  }, [searchParams, getByCode]);
+    const preselect = searchParams.get("service");
+    if (preselect) {
+      setServiceId(preselect);
+    }
+  }, [searchParams]);
 
-  // When a package is chosen on step 1, move forward automatically.
+  // When a service is chosen on step 1, move forward automatically.
   useEffect(() => {
-    if (!selectedPackage) return;
+    if (!selectedService) return;
     setStep((s) => (s === 1 ? 2 : s));
-  }, [selectedPackage]);
-
-  const serviceId = useMemo(() => {
-    if (!selectedPackage) return "";
-    if (selectedPackage.serviceId) return selectedPackage.serviceId;
-
-    const want = normalizeKey(selectedPackage.title);
-    return services.find((s) => normalizeKey(s.title) === want)?.id ?? "";
-  }, [services, selectedPackage]);
-
-  // Prefetch services list in the background so serviceId mapping is fast.
-  useEffect(() => {
-    if (services.length > 0) return;
-    if (loadingServices) return;
-
-    let alive = true;
-
-    (async () => {
-      setLoadingServices(true);
-      const svc = await supabase
-        .from("services")
-        .select("id,title,duration_mins,active,sort_order")
-        .eq("active", true)
-        .order("sort_order");
-
-      if (!alive) return;
-      setServices((svc.data ?? []) as Service[]);
-      setLoadingServices(false);
-    })();
-
-    return () => {
-      alive = false;
-    };
-  }, [services.length, loadingServices]);
+  }, [selectedService]);
 
   // Fetch availability
   useEffect(() => {
@@ -212,6 +168,8 @@ export default function Book() {
       setSelectedDay("");
       setWindowKey("");
       setStartAt("");
+      setLoadingTimes(false);
+      setAvailabilityStatus(null);
       return;
     }
 
@@ -224,6 +182,8 @@ export default function Book() {
       setStartAt("");
       setStatus(null);
       setStatusTone(null);
+      setAvailabilityStatus(null);
+      setLoadingTimes(false);
     }
 
     const cached = availabilityCache.get(serviceId);
@@ -244,46 +204,65 @@ export default function Book() {
     (async () => {
       // Only show a blocking spinner if we don't already have something to show.
       if (!hasCached) setLoadingTimes(true);
+      setAvailabilityStatus(null);
 
       const from = new Date();
       const to = addDays(from, 22);
       const fromNZ = toISODateNZ(from);
       const toNZ = toISODateNZ(to);
 
-      let promise = availabilityInFlight.get(serviceId);
-      if (!promise) {
-        promise = (async () => {
-          const { data, error } = await supabase.rpc("get_available_starts", {
-            p_service_id: serviceId,
-            p_from: fromNZ,
-            p_to: toNZ,
-            p_step_mins: 15,
+      try {
+        let promise = availabilityInFlight.get(serviceId);
+        if (!promise) {
+          promise = (async () => {
+            const rpcPromise = (async () => {
+              const { data, error } = await supabase.rpc("get_available_starts", {
+                p_service_id: serviceId,
+                p_from: fromNZ,
+                p_to: toNZ,
+                p_step_mins: 15,
+              });
+
+              if (error) return { times: [], error: { message: error.message } };
+              const nextTimes = (data ?? []).map((r: any) => r.start_at);
+              return { times: nextTimes, error: null };
+            })();
+
+            const timeoutPromise = new Promise<{ times: string[]; error: { message: string } }>((resolve) => {
+              window.setTimeout(() => {
+                resolve({
+                  times: [],
+                  error: { message: "Availability is taking too long to load. Please try again." },
+                });
+              }, AVAILABILITY_REQUEST_TIMEOUT_MS);
+            });
+
+            return await Promise.race([rpcPromise, timeoutPromise]);
+          })().finally(() => {
+            availabilityInFlight.delete(serviceId);
           });
 
-          if (error) return { times: [], error: { message: error.message } };
-          const nextTimes = (data ?? []).map((r: any) => r.start_at);
-          return { times: nextTimes, error: null };
-        })().finally(() => {
-          availabilityInFlight.delete(serviceId);
-        });
+          availabilityInFlight.set(serviceId, promise);
+        }
 
-        availabilityInFlight.set(serviceId, promise);
-      }
+        const { times: nextTimes, error } = await promise;
+        if (cancelled) return;
 
-      const { times: nextTimes, error } = await promise;
+        if (error) {
+          setAvailabilityStatus(error.message);
+          if (!hasCached) setTimes([]);
+          return;
+        }
 
-      if (cancelled) return;
-
-      if (error) {
-        setStatusTone("error");
-        setStatus(error.message);
-        if (!hasCached) setTimes([]);
-      } else {
         availabilityCache.set(serviceId, { at: Date.now(), times: nextTimes });
         setTimes(nextTimes);
+      } catch (e: any) {
+        if (cancelled) return;
+        setAvailabilityStatus(e?.message ?? "Availability failed to load. Please try again.");
+        if (!hasCached) setTimes([]);
+      } finally {
+        if (!cancelled) setLoadingTimes(false);
       }
-
-      setLoadingTimes(false);
     })();
 
     return () => {
@@ -436,16 +415,16 @@ export default function Book() {
     !submitting;
 
   const canGoNext = useMemo(() => {
-    if (step === 1) return !!selectedPackage;
+    if (step === 1) return !!selectedService;
     if (step === 2) return !!serviceId && !!startAt;
     if (step === 3) return name.trim().length >= 2 && emailOk && !!vehicleSize;
     return false;
-  }, [step, selectedPackage, serviceId, startAt, name, emailOk, vehicleSize]);
+  }, [step, selectedService, serviceId, startAt, name, emailOk, vehicleSize]);
 
   const stepTitle = useMemo(() => {
     switch (step) {
       case 1:
-        return "Choose a package";
+        return "Choose a service";
       case 2:
         return "Choose a day + window";
       case 3:
@@ -458,7 +437,7 @@ export default function Book() {
   const stepHint = useMemo(() => {
     switch (step) {
       case 1:
-        return "Pick what level of detail you want — you can change it later.";
+        return "Pick the service you want — you can change it later.";
       case 2:
         return "Choose a day and a drop-off window. We’ll reserve the earliest slot that fits.";
       case 3:
@@ -506,37 +485,22 @@ export default function Book() {
 
     if (!canSubmit) {
       setStatusTone("error");
-      if (!selectedPackage) return setStatus("Choose a package first.");
+      if (!selectedService) return setStatus("Choose a service first.");
       if (!startAt) return setStatus("Choose a day and drop-off window.");
       if (!name.trim()) return setStatus("Please enter your name.");
       if (!email.trim()) return setStatus("Please enter your email.");
-      if (!emailOk) return setStatus("That email doesn’t look right — please check it.");
+      if (!emailOk) return setStatus("That email doesn't look right — please check it.");
       if (!vehicleSize) return setStatus("Please select your vehicle size.");
       return setStatus("Please complete the required fields.");
     }
 
-    const svc = services.find((s) => s.id === serviceId) ?? null;
-    let durationMins = svc?.duration_mins ?? null;
-    if (durationMins == null) {
-      const { data, error } = await supabase
-        .from("services")
-        .select("duration_mins")
-        .eq("id", serviceId)
-        .maybeSingle();
-
-      if (error || !data?.duration_mins) {
-        setStatusTone("error");
-        setStatus("Please select a service.");
-        return;
-      }
-      durationMins = data.duration_mins;
-    }
-
-    if (durationMins == null) {
+    if (!selectedService) {
       setStatusTone("error");
       setStatus("Please select a service.");
       return;
     }
+
+    const durationMins = selectedService.duration_mins;
 
     const endAt = addMinutesIso(startAt, durationMins);
     if (!endAt) {
@@ -550,6 +514,30 @@ export default function Book() {
     const meta = windowLabel && windowKey !== "any" ? `Preferred drop-off window: ${windowLabel}` : "";
     const combinedNotes = [meta, notes.trim()].filter(Boolean).join("\n").trim() || null;
 
+    const bookingMeta = {
+      service_title: selectedService.title ?? null,
+      service_price_cents: selectedService.price_cents ?? null,
+      tax_mode: TAX_MODE,
+      gst_rate: GST_RATE,
+      service_price_net_cents:
+        typeof selectedService.price_cents === "number"
+          ? amountsForCustomerPrice(selectedService.price_cents, TAX_MODE, GST_RATE).netCents
+          : null,
+      service_price_gst_cents:
+        typeof selectedService.price_cents === "number"
+          ? amountsForCustomerPrice(selectedService.price_cents, TAX_MODE, GST_RATE).gstCents
+          : null,
+      service_price_gross_cents:
+        typeof selectedService.price_cents === "number"
+          ? amountsForCustomerPrice(selectedService.price_cents, TAX_MODE, GST_RATE).grossCents
+          : null,
+      vehicle_size: vehicleSummary,
+      preferred_window_key: windowKey || null,
+      preferred_window_label: windowLabel || null,
+      wants_specific_time: !!showExactTimes,
+      quoted_price_cents: null as number | null,
+    };
+
     setSubmitting(true);
     const { error } = await supabase.from("bookings").insert({
       service_id: serviceId,
@@ -560,6 +548,7 @@ export default function Book() {
       customer_phone: phone.trim() || null,
       vehicle: vehicleSummary,
       notes: combinedNotes,
+      meta: bookingMeta,
       status: "confirmed",
     });
     setSubmitting(false);
@@ -592,14 +581,14 @@ export default function Book() {
           <h1 className="mt-3 text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900">
             Book a detail
           </h1>
-          <p className="mt-2 text-slate-600 max-w-2xl">Pick a package → choose a day + drop-off window → enter details. Done.</p>
+          <p className="mt-2 text-slate-600 max-w-2xl">Pick a service → choose a day + drop-off window → enter details. Done.</p>
         </div>
       </div>
 
       <Card className="rounded-3xl p-4 sm:p-5">
         <div className="flex flex-wrap items-center gap-2">
-          {([
-            { n: 1, label: "Package" },
+            {([
+            { n: 1, label: "Service" },
             { n: 2, label: "Schedule" },
             { n: 3, label: "Details" },
             { n: 4, label: "Review" },
@@ -640,9 +629,9 @@ export default function Book() {
             <Card className="rounded-3xl p-5 sm:p-6 space-y-5">
               <div className="space-y-2">
                 <div className="flex items-baseline justify-between">
-                  <div className="text-sm font-extrabold text-slate-900">Package</div>
+                  <div className="text-sm font-extrabold text-slate-900">Service</div>
                   <Link to="/services" className="text-xs font-semibold text-slate-500 hover:text-slate-700">
-                    View packages
+                    View all services
                   </Link>
                 </div>
 
@@ -658,108 +647,111 @@ export default function Book() {
                   </span>
                 </div>
 
-                <div className="grid gap-4 xl:grid-cols-2">
-                  {packages.map((p) => {
-                    const selected = p.code === packageCode;
-                    return (
-                      <button
-                        key={p.code}
-                        type="button"
-                        onClick={() => {
-                          setPackageCode(p.code);
-                          setSelectedDay("");
-                          setWindowKey("");
-                          setStartAt("");
-                        }}
-                        className={cn(
-                          "group relative overflow-hidden rounded-3xl text-left transition",
-                          "bg-gradient-to-br from-white via-white to-slate-50",
-                          "ring-1 shadow-sm",
-                          "hover:-translate-y-[1px] hover:shadow-md",
-                          "focus:outline-none focus-visible:ring-4 focus-visible:ring-indigo-200",
-                          selected
-                            ? "ring-2 ring-indigo-600/50 shadow-md"
-                            : "ring-black/10 hover:ring-black/15"
-                        )}
-                        aria-pressed={selected}
-                      >
-                        <div className="absolute -right-20 -top-24 h-48 w-48 rounded-full bg-indigo-600/10 blur-2xl transition-opacity group-hover:opacity-100 opacity-70" />
+                {loadingServices ? (
+                  <div className="text-sm text-slate-600">Loading services…</div>
+                ) : services.length === 0 ? (
+                  <div className="rounded-2xl bg-slate-50 p-6 text-center ring-1 ring-black/5">
+                    <div className="text-sm font-semibold text-slate-900">No services available</div>
+                    <div className="mt-2 text-sm text-slate-600">Please check back later or contact us for more information.</div>
+                  </div>
+                ) : (
+                  <div className="grid gap-4 xl:grid-cols-2">
+                    {services.map((s) => {
+                      const selected = s.id === serviceId;
+                      return (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => {
+                            setServiceId(s.id);
+                            setSelectedDay("");
+                            setWindowKey("");
+                            setStartAt("");
+                          }}
+                          className={cn(
+                            "group relative overflow-hidden rounded-3xl text-left transition",
+                            "bg-gradient-to-br from-white via-white to-slate-50",
+                            "ring-1 shadow-sm",
+                            "hover:-translate-y-[1px] hover:shadow-md",
+                            "focus:outline-none focus-visible:ring-4 focus-visible:ring-indigo-200",
+                            selected
+                              ? "ring-2 ring-indigo-600/50 shadow-md"
+                              : "ring-black/10 hover:ring-black/15"
+                          )}
+                          aria-pressed={selected}
+                        >
+                          <div className="absolute -right-20 -top-24 h-48 w-48 rounded-full bg-indigo-600/10 blur-2xl transition-opacity group-hover:opacity-100 opacity-70" />
 
-                        <div className="p-5 sm:p-6">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <span
-                                    className={cn(
-                                      "h-2.5 w-2.5 rounded-full bg-gradient-to-r shrink-0",
-                                      accentClass(p.code)
-                                    )}
-                                  />
-                                  <div className="min-w-0 flex-1 text-base sm:text-lg font-extrabold tracking-tight text-slate-900 whitespace-normal break-normal hyphens-auto leading-tight">
-                                    {p.title}
+                          <div className="p-5 sm:p-6">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <span className="h-2.5 w-2.5 rounded-full bg-indigo-600 shrink-0" />
+                                    <div className="min-w-0 flex-1 text-base sm:text-lg font-extrabold tracking-tight text-slate-900 whitespace-normal break-normal hyphens-auto leading-tight">
+                                      {s.title}
+                                    </div>
                                   </div>
                                 </div>
-                                {isMostPopular(p.code) && (
-                                  <span className="inline-flex items-center rounded-full bg-indigo-600 text-white px-2.5 py-1 text-[11px] font-extrabold">
-                                    Most popular
-                                  </span>
+                                {s.subtitle && (
+                                  <div className="mt-1 text-sm text-slate-600">{s.subtitle}</div>
                                 )}
                               </div>
-                              <div className="mt-1 text-sm text-slate-600">{p.subtitle}</div>
-                            </div>
 
-                            <div className="shrink-0 text-right flex flex-col items-end">
-                              {selected && (
-                                <div className="mb-2">
-                                  <div className="h-9 w-9 rounded-2xl bg-indigo-600 text-white ring-1 ring-indigo-500/30 grid place-items-center shadow-sm">
-                                    <svg
-                                      viewBox="0 0 24 24"
-                                      className="h-5 w-5"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2.5"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    >
-                                      <path d="M20 6L9 17l-5-5" />
-                                    </svg>
+                              <div className="shrink-0 text-right flex flex-col items-end">
+                                {selected && (
+                                  <div className="mb-2">
+                                    <div className="h-9 w-9 rounded-2xl bg-indigo-600 text-white ring-1 ring-indigo-500/30 grid place-items-center shadow-sm">
+                                      <svg
+                                        viewBox="0 0 24 24"
+                                        className="h-5 w-5"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2.5"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      >
+                                        <path d="M20 6L9 17l-5-5" />
+                                      </svg>
+                                    </div>
                                   </div>
+                                )}
+                                <div className="text-sm font-extrabold text-slate-900">
+                                  From {fmtMoney(s.price_cents)}
+                                  <span className="ml-2 text-[11px] font-extrabold text-slate-500">{taxLabelShort()}</span>
                                 </div>
-                              )}
-                              <div className="text-sm font-extrabold text-slate-900">From {fmtMoney(p.fromPriceCents)}</div>
-                              <div className="mt-1 flex justify-end">
-                                <Pill className="bg-black/5">Time varies</Pill>
+                                <div className="mt-1 flex justify-end">
+                                  <Pill className="bg-black/5">{s.duration_mins} mins</Pill>
+                                </div>
                               </div>
                             </div>
-                          </div>
 
-                          <div className="mt-3 text-sm text-slate-700">{p.summary}</div>
+                            {s.summary && (
+                              <div className="mt-3 text-sm text-slate-700">{s.summary}</div>
+                            )}
 
-                          <div className="mt-4 grid gap-2">
-                            {p.includes.slice(0, 2).map((x) => (
-                              <div key={x} className="flex items-start gap-2 text-sm text-slate-700">
-                                <span
-                                  className={cn(
-                                    "mt-2 h-1.5 w-1.5 rounded-full bg-gradient-to-r",
-                                    accentClass(p.code)
-                                  )}
-                                />
-                                <span className="min-w-0">{x}</span>
+                            {s.includes && s.includes.length > 0 && (
+                              <div className="mt-4 grid gap-2">
+                                {s.includes.slice(0, 4).map((x, i) => (
+                                  <div key={i} className="flex items-start gap-2 text-sm text-slate-700">
+                                    <span className="mt-2 h-1.5 w-1.5 rounded-full bg-indigo-600 shrink-0" />
+                                    <span className="min-w-0">{x}</span>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
-                          </div>
+                            )}
 
-                          {selected && (
-                            <div className="mt-4 rounded-2xl bg-indigo-600/10 text-indigo-700 ring-1 ring-indigo-600/15 px-3 py-2 text-xs font-extrabold">
-                              Selected
-                            </div>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
+                            {selected && (
+                              <div className="mt-4 rounded-2xl bg-indigo-600/10 text-indigo-700 ring-1 ring-indigo-600/15 px-3 py-2 text-xs font-extrabold">
+                                Selected
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               <div className="hidden md:flex justify-end pt-2">
@@ -777,20 +769,23 @@ export default function Book() {
                   <div className="text-sm font-extrabold text-slate-900">Schedule</div>
                 </div>
 
-                {selectedPackage && (
+                {selectedService && (
                   <div className="rounded-2xl bg-slate-50 ring-1 ring-black/5 px-4 py-3">
-                    <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500">Selected package</div>
+                    <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500">Selected service</div>
                     <div className="mt-1 flex items-baseline justify-between gap-3">
-                      <div className="min-w-0 text-sm font-semibold text-slate-900 truncate">{selectedPackage.title}</div>
-                      <div className="shrink-0 text-sm font-extrabold text-slate-900">From {fmtMoney(selectedPackage.fromPriceCents)}</div>
+                      <div className="min-w-0 text-sm font-semibold text-slate-900 truncate">{selectedService.title}</div>
+                      <div className="shrink-0 text-sm font-extrabold text-slate-900">
+                        From {fmtMoney(selectedService.price_cents)}
+                        <span className="ml-2 text-[11px] font-extrabold text-slate-500">{taxLabelShort()}</span>
+                      </div>
                     </div>
-                    <div className="mt-1 text-xs text-slate-600">Pick a day + drop-off window. We’ll reserve the earliest slot that fits.</div>
+                    <div className="mt-1 text-xs text-slate-600">Pick a day + drop-off window. We'll reserve the earliest slot that fits.</div>
                   </div>
                 )}
 
-                {!selectedPackage ? (
+                {!selectedService ? (
                   <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600 ring-1 ring-black/5">
-                    Choose a package to see availability.
+                    Choose a service to see availability.
                   </div>
                 ) : !serviceId ? (
                   <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600 ring-1 ring-black/5">
@@ -800,13 +795,22 @@ export default function Book() {
                   <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600 ring-1 ring-black/5">
                     Loading availability…
                   </div>
+                ) : availabilityStatus ? (
+                  <div className="rounded-2xl bg-rose-50 p-4 text-sm text-rose-800 ring-1 ring-rose-200">
+                    <div>{availabilityStatus}</div>
+                    <div className="mt-3">
+                      <Button variant="secondary" onClick={() => setTimesNonce((x) => x + 1)}>
+                        Retry
+                      </Button>
+                    </div>
+                  </div>
                 ) : grouped.length === 0 ? (
                   <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600 ring-1 ring-black/5">
                     <div>No available times in the next 3 weeks.</div>
                     <div className="mt-3">
                       <Link to="/services" className="w-full sm:w-auto">
                         <Button variant="ghost" className="w-full sm:w-auto">
-                          View packages
+                          View services
                         </Button>
                       </Link>
                     </div>
@@ -1046,9 +1050,9 @@ export default function Book() {
               <div className="rounded-2xl bg-slate-50 ring-1 ring-black/5 p-4 space-y-3">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500">Package</div>
+                    <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500">Service</div>
                     <div className="mt-1 text-sm font-semibold text-slate-900 truncate">
-                      {selectedPackage ? selectedPackage.title : "—"}
+                      {selectedService ? selectedService.title : "—"}
                     </div>
                   </div>
                   <button
@@ -1127,12 +1131,15 @@ export default function Book() {
               <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500">Your booking</div>
 
               <div className="rounded-2xl bg-slate-50 ring-1 ring-black/5 p-4">
-                <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500">Package</div>
-                <div className="mt-1 text-sm font-semibold text-slate-900">
-                  {selectedPackage ? selectedPackage.title : "Choose a package"}
+                <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500">Service</div>
+                <div className="mt-1 text-sm font-extrabold text-slate-900">
+                  {selectedService ? selectedService.title : "Choose a service"}
                 </div>
-                {selectedPackage && (
-                  <div className="mt-1 text-sm text-slate-700">From {fmtMoney(selectedPackage.fromPriceCents)}</div>
+                {selectedService && (
+                  <div className="mt-1 text-sm text-slate-700">
+                    From {fmtMoney(selectedService.price_cents)}
+                    <span className="ml-2 text-xs font-extrabold text-slate-500">{taxLabelShort()}</span>
+                  </div>
                 )}
               </div>
 
@@ -1141,7 +1148,7 @@ export default function Book() {
                 <div className="mt-1 text-sm font-semibold text-slate-900">{whenSummary}</div>
               </div>
 
-              <div className="flex gap-2">
+              {/* <div className="flex gap-2">
                 <Button variant="secondary" disabled={step === 1} onClick={goBack} className="flex-1">
                   Back
                 </Button>
@@ -1155,7 +1162,7 @@ export default function Book() {
                     {statusTone === "success" ? "Sent" : submitting ? "Sending…" : "Send"}
                   </Button>
                 )}
-              </div>
+              </div> */}
 
               <div className="text-xs text-slate-500">
                 You’ll receive a message to confirm the exact drop-off time.
@@ -1174,7 +1181,7 @@ export default function Book() {
                 <div className="min-w-0">
                   <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500">Selected</div>
                   <div className="mt-1 text-sm font-semibold text-slate-900 truncate">
-                    {selectedPackage ? selectedPackage.title : "Choose a package"}
+                    {selectedService ? selectedService.title : "Choose a service"}
                   </div>
                   <div className="mt-1 text-xs text-slate-600">
                     {whenSummary}

@@ -5,6 +5,8 @@ import { PACKAGES as DEFAULT_PACKAGES } from "../catalog/packages";
 let cachedPackages: PackageDefinition[] | null = null;
 let cachedAtMs = 0;
 const CACHE_TTL_MS = 60_000;
+const PACKAGES_UPDATED_AT_KEY = "dds_packages_updated_at";
+const PACKAGES_UPDATED_EVENT = "dds_packages_updated";
 
 export type PackageDefinition = {
   code: string;
@@ -63,7 +65,7 @@ export function usePackages() {
   useEffect(() => {
     let alive = true;
 
-    (async () => {
+    async function load() {
       const cacheFresh = cachedPackages && Date.now() - cachedAtMs < CACHE_TTL_MS;
       if (!cacheFresh && (cachedPackages == null || cachedPackages.length === 0)) setLoading(true);
       setError(null);
@@ -120,10 +122,39 @@ export function usePackages() {
       cachedAtMs = Date.now();
       setPackages(merged);
       setLoading(false);
-    })();
+    }
+
+    load();
+
+    const onFocus = () => load();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") load();
+    };
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === PACKAGES_UPDATED_AT_KEY) {
+        cachedAtMs = 0;
+        cachedPackages = null;
+        load();
+      }
+    };
+
+    const onUpdated = () => {
+      cachedAtMs = 0;
+      cachedPackages = null;
+      load();
+    };
+
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("storage", onStorage);
+    window.addEventListener(PACKAGES_UPDATED_EVENT, onUpdated as EventListener);
 
     return () => {
       alive = false;
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener(PACKAGES_UPDATED_EVENT, onUpdated as EventListener);
     };
   }, []);
 

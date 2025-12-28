@@ -3,7 +3,7 @@ import { Link, NavLink } from "react-router-dom";
 import { clsx } from "clsx";
 
 const nav = [
-  { to: "/services", label: "Packages" },
+  { to: "/services", label: "Services" },
   { to: "/books", label: "Books" },
   { to: "/booking", label: "Book a call" },
 ];
