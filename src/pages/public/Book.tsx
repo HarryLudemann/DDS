@@ -751,19 +751,19 @@ export default function Book() {
                         >
                           <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-indigo-600/5 blur-3xl transition-opacity group-hover:opacity-100 opacity-50" />
 
-                          <div className="relative p-6 sm:p-7">
+                          <div className="relative p-5 sm:p-6">
                             {/* Header Section */}
-                            <div className="mb-5">
-                              <div className="flex items-start justify-between gap-3 mb-2">
-                                <h3 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 leading-tight break-words flex-1 min-w-0">
+                            <div className="mb-3">
+                              <div className="flex items-start justify-between gap-3 mb-1.5">
+                                <h3 className="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 leading-tight break-words flex-1 min-w-0">
                                   {s.title}
                                 </h3>
                                 {selected && (
                                   <div className="shrink-0">
-                                    <div className="h-8 w-8 rounded-xl bg-indigo-600 text-white ring-2 ring-indigo-500/30 grid place-items-center shadow-sm">
+                                    <div className="h-7 w-7 rounded-xl bg-indigo-600 text-white ring-2 ring-indigo-500/30 grid place-items-center shadow-sm">
                                       <svg
                                         viewBox="0 0 24 24"
-                                        className="h-4 w-4"
+                                        className="h-3.5 w-3.5"
                                         fill="none"
                                         stroke="currentColor"
                                         strokeWidth="3"
@@ -777,35 +777,35 @@ export default function Book() {
                                 )}
                               </div>
                               {s.subtitle && (
-                                <div className="text-sm sm:text-base text-slate-600 break-words leading-relaxed">
+                                <div className="text-sm text-slate-600 break-words leading-relaxed">
                                   {s.subtitle}
                                 </div>
                               )}
                             </div>
 
                             {/* Price and Duration */}
-                            <div className="flex flex-wrap items-center justify-between gap-3 py-4 border-y border-slate-200/80 mb-5">
-                              <div className="flex items-baseline gap-2.5">
-                                <span className="text-lg sm:text-xl font-extrabold text-slate-900">
+                            <div className="flex flex-wrap items-center justify-between gap-3 py-3 border-y border-slate-200/80 mb-3">
+                              <div className="flex items-baseline gap-2">
+                                <span className="text-base sm:text-lg font-extrabold text-slate-900">
                                   From {fmtMoney(s.price_cents)}
                                 </span>
-                                <span className="text-xs font-semibold text-slate-500">{taxLabelShort()}</span>
+                                <span className="text-[11px] font-semibold text-slate-500">{taxLabelShort()}</span>
                               </div>
-                              <Pill className="bg-slate-100 text-slate-700 text-xs font-semibold px-3 py-1">
+                              <Pill className="bg-slate-100 text-slate-700 text-xs font-semibold px-2.5 py-0.5">
                                 {s.duration_mins} mins
                               </Pill>
                             </div>
 
                             {/* Summary */}
                             {s.summary && (
-                              <div className="mb-5 text-sm text-slate-700 leading-relaxed">{s.summary}</div>
+                              <div className="mb-3 text-sm text-slate-700 leading-relaxed">{s.summary}</div>
                             )}
 
                             {/* Includes */}
                             {s.includes && s.includes.length > 0 && (
-                              <div className="mb-5 space-y-2.5">
+                              <div className="mb-3 space-y-2">
                                 {s.includes.slice(0, 4).map((x, i) => (
-                                  <div key={i} className="flex items-start gap-3 text-sm text-slate-700">
+                                  <div key={i} className="flex items-start gap-2.5 text-sm text-slate-700">
                                     <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-indigo-600 shrink-0" />
                                     <span className="min-w-0 leading-relaxed">{x}</span>
                                   </div>
@@ -815,7 +815,7 @@ export default function Book() {
 
                             {/* Selected Badge */}
                             {selected && (
-                              <div className="mt-5 rounded-xl bg-indigo-600/10 text-indigo-700 ring-1 ring-indigo-600/20 px-4 py-2.5 text-xs font-extrabold tracking-wide uppercase">
+                              <div className="mt-3 rounded-xl bg-indigo-600/10 text-indigo-700 ring-1 ring-indigo-600/20 px-3 py-1.5 text-xs font-extrabold tracking-wide uppercase">
                                 Selected
                               </div>
                             )}

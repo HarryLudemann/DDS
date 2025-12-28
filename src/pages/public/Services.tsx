@@ -37,45 +37,45 @@ export default function Services() {
             >
               <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-indigo-600/5 blur-3xl transition-opacity group-hover:opacity-100 opacity-50" />
               
-              <div className="relative p-6 sm:p-7 flex flex-col flex-1">
+              <div className="relative p-5 sm:p-6 flex flex-col flex-1">
                 {/* Header Section */}
-                <div className="mb-5">
-                  <h3 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 leading-tight break-words mb-2">
+                <div className="mb-3">
+                  <h3 className="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 leading-tight break-words mb-1.5">
                     {s.title}
                   </h3>
                   {s.subtitle && (
-                    <div className="text-sm sm:text-base text-slate-600 break-words leading-relaxed">
+                    <div className="text-sm text-slate-600 break-words leading-relaxed">
                       {s.subtitle}
                     </div>
                   )}
                 </div>
 
                 {/* Price and Duration */}
-                <div className="flex flex-wrap items-center justify-between gap-3 py-4 border-y border-slate-200/80 mb-5">
-                  <div className="flex items-baseline gap-2.5">
-                    <span className="text-lg sm:text-xl font-extrabold text-slate-900">
+                <div className="flex flex-wrap items-center justify-between gap-3 py-3 border-y border-slate-200/80 mb-3">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-base sm:text-lg font-extrabold text-slate-900">
                       From {fmtMoneyNZD(s.price_cents)}
                     </span>
-                    <span className="text-xs font-semibold text-slate-500">{taxLabelShort()}</span>
+                    <span className="text-[11px] font-semibold text-slate-500">{taxLabelShort()}</span>
                   </div>
-                  <Pill className="bg-slate-100 text-slate-700 text-xs font-semibold px-3 py-1">
+                  <Pill className="bg-slate-100 text-slate-700 text-xs font-semibold px-2.5 py-0.5">
                     {s.duration_mins} mins
                   </Pill>
                 </div>
 
                 {/* Summary */}
                 {s.summary && (
-                  <div className="mb-5 text-sm text-slate-700 leading-relaxed">{s.summary}</div>
+                  <div className="mb-3 text-sm text-slate-700 leading-relaxed">{s.summary}</div>
                 )}
 
                 {/* Includes and Ideal For */}
-                <div className="grid gap-4 sm:grid-cols-2 mb-6">
+                <div className="grid gap-3 sm:grid-cols-2 mb-4">
                   {s.includes && s.includes.length > 0 && (
-                    <div className="rounded-xl bg-slate-50/80 ring-1 ring-slate-200/60 p-4">
-                      <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500 mb-3">Top inclusions</div>
-                      <ul className="space-y-2.5 text-sm text-slate-700">
+                    <div className="rounded-xl bg-slate-50/80 ring-1 ring-slate-200/60 p-3">
+                      <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500 mb-2">Top inclusions</div>
+                      <ul className="space-y-2 text-sm text-slate-700">
                         {s.includes.slice(0, 4).map((x, i) => (
-                          <li key={i} className="flex items-start gap-3">
+                          <li key={i} className="flex items-start gap-2.5">
                             <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-indigo-600 shrink-0" />
                             <span className="min-w-0 leading-relaxed">{x}</span>
                           </li>
@@ -85,8 +85,8 @@ export default function Services() {
                   )}
 
                   {s.ideal_for && s.ideal_for.length > 0 && (
-                    <div className="rounded-xl bg-white ring-1 ring-slate-200/60 p-4">
-                      <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500 mb-3">Ideal for</div>
+                    <div className="rounded-xl bg-white ring-1 ring-slate-200/60 p-3">
+                      <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500 mb-2">Ideal for</div>
                       <div className="flex flex-wrap gap-2">
                         {s.ideal_for.map((x, i) => (
                           <Pill key={i} className="text-xs">{x}</Pill>
@@ -97,7 +97,7 @@ export default function Services() {
                 </div>
 
                 {/* CTA Button */}
-                <div className="mt-auto pt-2">
+                <div className="mt-auto pt-1">
                   <Link to={`/book?service=${encodeURIComponent(s.id)}`} className="block w-full">
                     <Button className="w-full">Check availability</Button>
                   </Link>
