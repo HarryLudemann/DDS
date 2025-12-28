@@ -3,7 +3,7 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import { clsx } from "../../utils/format";
 import { Button } from "../ui/Button";
 import { supabase } from "../../utils/supabase";
-import { CookieConsent } from "../CookieConsent";
+import { CookieConsent, hasCookieConsent } from "../CookieConsent";
 
 function Container({ children }: { children: React.ReactNode }) {
   return (
@@ -71,6 +71,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const [mobileCtaVisible, setMobileCtaVisible] = useState(false);
   const [mobileCtaEligible, setMobileCtaEligible] = useState(false);
   const [footerInView, setFooterInView] = useState(false);
+  const [cookieConsentGiven, setCookieConsentGiven] = useState(() => hasCookieConsent());
   const footerRef = useRef<HTMLElement | null>(null);
   const location = useLocation();
   const [overflowOffenders, setOverflowOffenders] = useState<
@@ -101,6 +102,25 @@ export function Shell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setOpen(false);
   }, [location.pathname]);
+
+  // Watch for cookie consent changes
+  useEffect(() => {
+    const checkConsent = () => {
+      setCookieConsentGiven(hasCookieConsent());
+    };
+    
+    // Check initially and on storage events (when cookie consent is saved)
+    checkConsent();
+    window.addEventListener("storage", checkConsent);
+    
+    // Also check periodically in case localStorage is updated in the same tab
+    const interval = setInterval(checkConsent, 500);
+    
+    return () => {
+      window.removeEventListener("storage", checkConsent);
+      clearInterval(interval);
+    };
+  }, []);
 
   // Scroll to top on navigation - ensure it happens reliably
   useEffect(() => {
@@ -393,7 +413,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      <CookieConsent offsetBottomPx={showMobileCta && mobileCtaEligible ? 112 : 0} />
+      <CookieConsent />
       {/* HEADER */}
       <header className="sticky top-0 z-40 bg-[#f7f7f8]/90 backdrop-blur">
         <div className="border-b border-black/5">
@@ -471,7 +491,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </Container>
       </main>
 
-      {showMobileCta && mobileCtaEligible && (
+      {showMobileCta && mobileCtaEligible && cookieConsentGiven && (
         <div
           className={clsx(
             "fixed inset-x-0 bottom-0 z-30 md:hidden",

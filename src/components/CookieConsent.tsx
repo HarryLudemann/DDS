@@ -5,7 +5,17 @@ import { Button } from "./ui/Button";
 
 const KEY = "dds_cookie_consent";
 
-export function CookieConsent({ offsetBottomPx = 0 }: { offsetBottomPx?: number }) {
+// Export function to check if cookies have been accepted/declined
+export function hasCookieConsent(): boolean {
+  try {
+    const choice = window.localStorage.getItem(KEY);
+    return choice === "accepted" || choice === "declined";
+  } catch {
+    return true; // If we can't check, assume accepted to avoid blocking
+  }
+}
+
+export function CookieConsent() {
   const location = useLocation();
   const [choice, setChoice] = useState<string | null>(null);
 
@@ -33,11 +43,11 @@ export function CookieConsent({ offsetBottomPx = 0 }: { offsetBottomPx?: number 
   return (
     <div
       className={clsx(
-        "fixed inset-x-0 z-[60]",
-        "px-2 sm:px-4",
+        "fixed inset-x-0 bottom-0 z-[60]",
+        "px-4 sm:px-4",
         "transition-opacity"
       )}
-      style={{ bottom: `calc(env(safe-area-inset-bottom) + ${offsetBottomPx}px + 12px)` }}
+      style={{ paddingBottom: `calc(env(safe-area-inset-bottom) + 12px)` }}
       role="region"
       aria-label="Cookie consent"
     >
