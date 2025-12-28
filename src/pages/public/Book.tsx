@@ -68,6 +68,43 @@ function toISODateNZ(d: Date) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: NZ_TZ }).format(d); // YYYY-MM-DD
 }
 
+/**
+ * Get the current date in NZ timezone as a date key (YYYY-MM-DD)
+ */
+function todayNZDateKey(): string {
+  return toISODateNZ(new Date());
+}
+
+/**
+ * Get tomorrow's date in NZ timezone as a date key (YYYY-MM-DD)
+ * This properly handles timezone conversions by working entirely in NZ timezone
+ * by manually adding 1 day to avoid timezone conversion issues
+ */
+function tomorrowNZDateKey(): string {
+  // Get today's date in NZ timezone as YYYY-MM-DD
+  const todayStr = todayNZDateKey();
+  const [y, m, d] = todayStr.split("-").map(Number);
+  
+  // Manually add 1 day, handling month/year boundaries
+  // This avoids timezone conversion issues entirely
+  const daysInMonth = new Date(y, m, 0).getDate(); // Get days in current month
+  let nextYear = y;
+  let nextMonth = m;
+  let nextDay = d + 1;
+  
+  if (nextDay > daysInMonth) {
+    nextDay = 1;
+    nextMonth += 1;
+    if (nextMonth > 12) {
+      nextMonth = 1;
+      nextYear += 1;
+    }
+  }
+  
+  // Format as YYYY-MM-DD (zero-padded)
+  return `${nextYear}-${String(nextMonth).padStart(2, "0")}-${String(nextDay).padStart(2, "0")}`;
+}
+
 function addMinutesIso(iso: string, mins: number): string | null {
   const d = new Date(iso);
   if (!Number.isFinite(d.getTime())) return null;
@@ -81,26 +118,35 @@ function isValidEmail(v: string) {
 /**
  * Make labels from dateKey itself (not from arbitrary slot time),
  * and keep ordering stable and human-friendly.
+ * 
+ * The dateKey is a YYYY-MM-DD string representing a date in NZ timezone.
+ * We create a Date at midnight UTC for the date components, which represents
+ * noon/early afternoon on that same date in NZ (UTC+12/13), ensuring the
+ * weekday calculation is correct.
  */
 function labelForDateKeyNZ(dateKey: string) {
   const [y, m, d] = dateKey.split("-").map(Number);
-  // Use midday UTC so it won't roll dates due to tz conversions
-  const safe = new Date(Date.UTC(y, (m ?? 1) - 1, d ?? 1, 12, 0, 0));
-
+  
+  // Create date at midnight UTC for the date components
+  // This represents 12:00-13:00 on that same date in NZ (UTC+12/13)
+  // Using midnight UTC avoids DST edge cases and ensures correct weekday
+  const dateForFormatting = new Date(Date.UTC(y, (m ?? 1) - 1, d ?? 1, 0, 0, 0));
+  
+  // Format in NZ timezone to get the correct weekday and date display
   const day = new Intl.DateTimeFormat("en-NZ", {
     timeZone: NZ_TZ,
     weekday: "short",
-  }).format(safe);
+  }).format(dateForFormatting);
 
   const rest = new Intl.DateTimeFormat("en-NZ", {
     timeZone: NZ_TZ,
     day: "2-digit",
     month: "short",
-  }).format(safe);
+  }).format(dateForFormatting);
 
-  // Today/Tomorrow tag
-  const nowKey = toISODateNZ(new Date());
-  const tomorrowKey = toISODateNZ(addDays(new Date(), 1));
+  // Today/Tomorrow tag - use NZ timezone functions to ensure correct calculation
+  const nowKey = todayNZDateKey();
+  const tomorrowKey = tomorrowNZDateKey();
   const tag = dateKey === nowKey ? "Today" : dateKey === tomorrowKey ? "Tomorrow" : "";
 
   return tag ? `${tag} · ${day} ${rest}` : `${day} ${rest}`;
@@ -205,10 +251,26 @@ export default function Book() {
       if (!hasCached) setLoadingTimes(true);
       setAvailabilityStatus(null);
 
-      const from = new Date();
-      const to = addDays(from, 22);
-      const fromNZ = toISODateNZ(from);
-      const toNZ = toISODateNZ(to);
+      // Use NZ timezone for date calculations to ensure consistency
+      const fromNZ = todayNZDateKey();
+      // Calculate "to" date by manually adding 22 days to today's date in NZ timezone
+      // This avoids timezone conversion issues
+      const [y, m, d] = fromNZ.split("-").map(Number);
+      let toYear = y;
+      let toMonth = m;
+      let toDay = d + 22;
+      
+      // Handle month/year rollover
+      while (toDay > new Date(toYear, toMonth, 0).getDate()) {
+        toDay -= new Date(toYear, toMonth, 0).getDate();
+        toMonth += 1;
+        if (toMonth > 12) {
+          toMonth = 1;
+          toYear += 1;
+        }
+      }
+      
+      const toNZ = `${toYear}-${String(toMonth).padStart(2, "0")}-${String(toDay).padStart(2, "0")}`;
 
       try {
         let promise = availabilityInFlight.get(serviceId);

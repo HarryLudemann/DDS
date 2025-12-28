@@ -330,6 +330,9 @@ as $$
     from public.availability_rules ar
     join x on true
     where ar.active = true
+      -- Use same day-of-week calculation as get_available_starts for consistency
+      -- PostgreSQL extract(dow) returns: 0=Sunday, 1=Monday, ..., 6=Saturday
+      -- This matches our format exactly
       and ar.dow = extract(dow from x.nz_start)::int
       and ar.effective_from <= (x.nz_start::date)
       and (ar.effective_to is null or (x.nz_start::date) <= ar.effective_to)
@@ -359,8 +362,9 @@ as $$
     limit 1
   ),
   days as (
+    -- Generate date series - dates are timezone-agnostic, so this is safe
     select d::date as day
-    from generate_series(p_from::timestamp, p_to::timestamp, interval '1 day') d
+    from generate_series(p_from, p_to, interval '1 day') d
   ),
   rules as (
     select
@@ -372,15 +376,18 @@ as $$
       select ar.start_time, ar.end_time
       from public.availability_rules ar
       where ar.active = true
-        -- Extract day of week in NZ timezone using make_timestamptz
-        -- This creates a timestamptz at noon NZ time for the given date
-        -- PostgreSQL dow: 0=Sunday, 1=Monday, ..., 6=Saturday
-        and ar.dow = extract(dow from make_timestamptz(
-          extract(year from day)::int,
-          extract(month from day)::int,
-          extract(day from day)::int,
-          12, 0, 0,
-          'Pacific/Auckland'
+        -- Extract day of week in NZ timezone
+        -- Create timestamp at noon NZ time, convert to NZ timezone, then extract dow
+        -- PostgreSQL extract(dow) returns: 0=Sunday, 1=Monday, ..., 6=Saturday
+        -- This matches our format exactly (0=Sun, 1=Mon, ..., 6=Sat)
+        and ar.dow = extract(dow from (
+          make_timestamptz(
+            extract(year from day)::int,
+            extract(month from day)::int,
+            extract(day from day)::int,
+            12, 0, 0,
+            'Pacific/Auckland'
+          ) at time zone 'Pacific/Auckland'
         ))::int
         and ar.effective_from <= day
         and (ar.effective_to is null or day <= ar.effective_to)
