@@ -7,7 +7,7 @@ import { CookieConsent } from "../CookieConsent";
 
 function Container({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mx-auto w-full max-w-6xl px-2 sm:px-4 min-w-0 overflow-x-clip">
+    <div className="mx-auto w-full max-w-6xl px-4 sm:px-4 min-w-0 overflow-x-clip">
       {children}
     </div>
   );
@@ -483,7 +483,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           aria-hidden={!(mobileCtaVisible && !footerInView)}
         >
           <div className="pointer-events-none absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-[#f7f7f8] to-transparent" />
-          <div className="bg-[#f7f7f8]/95 backdrop-blur border-t border-black/5 shadow-[0_-10px_30px_rgba(0,0,0,0.06)] px-2 sm:px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
+          <div className="bg-[#f7f7f8]/95 backdrop-blur border-t border-black/5 shadow-[0_-10px_30px_rgba(0,0,0,0.06)] px-4 sm:px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
             <div className="mx-auto max-w-6xl">
               <Link to="/book" className="block no-underline">
                 <Button className="w-full py-3 text-base rounded-2xl">Check availability</Button>
@@ -580,10 +580,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
               <div className="pt-[env(safe-area-inset-top)]" />
 
               {/* Top bar */}
-              <div className="px-5 py-4 flex items-center justify-between">
+              <div className="px-4 py-4 flex items-center justify-between">
                 <div className="min-w-0">
                   <div className="text-sm font-extrabold tracking-tight text-slate-900 truncate">
-                    Dylan’s <span className="text-indigo-600">Detailing</span> Service
+                    Dylan's <span className="text-indigo-600">Detailing</span> Service
                   </div>
                   <div className="text-xs text-slate-500">Wellington</div>
                 </div>
@@ -598,7 +598,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               </div>
 
               {/* Content */}
-              <div className="px-5 pb-6 flex-1 overflow-y-auto">
+              <div className="px-4 pb-6 flex-1 overflow-y-auto">
                 <Link 
                   to="/book" 
                   className="block no-underline"
