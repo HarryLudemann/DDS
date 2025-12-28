@@ -58,12 +58,6 @@ function isoToNZMinutesSinceMidnight(iso: string) {
   return h * 60 + m;
 }
 
-function addDays(d: Date, days: number) {
-  const x = new Date(d);
-  x.setDate(x.getDate() + days);
-  return x;
-}
-
 function toISODateNZ(d: Date) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: NZ_TZ }).format(d); // YYYY-MM-DD
 }

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
+import { Pill } from "../../components/ui/Pill";
 import { fmtMoney } from "../../utils/format";
 import { useServices } from "../../hooks/useServices";
 import { taxLabelShort } from "../../utils/tax";
@@ -27,14 +28,6 @@ function SectionTitle({
       </h2>
       {desc && <p className="mt-2 text-sm sm:text-base text-slate-600">{desc}</p>}
     </div>
-  );
-}
-
-function Pill({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="inline-flex items-center rounded-full bg-white/70 ring-1 ring-black/5 px-3 py-1 text-xs font-semibold text-slate-700">
-      {children}
-    </span>
   );
 }
 
