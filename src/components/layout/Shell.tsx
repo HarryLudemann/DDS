@@ -24,17 +24,28 @@ function MenuCard({
   subtitle?: string;
   onClick: () => void;
 }) {
+  const handleClick = () => {
+    // Close menu first
+    onClick();
+    // Then scroll to top after a brief delay to ensure route change happens
+    setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }, 100);
+  };
+
   return (
     <Link
       to={to}
-      onClick={onClick}
+      onClick={handleClick}
       className={clsx(
         "block no-underline rounded-3xl bg-white",
-        "ring-1 ring-black/10 shadow-sm",
-        "px-5 py-4 transition",
-        "hover:bg-slate-50 hover:ring-black/15",
+        "border border-slate-200 shadow-sm",
+        "px-5 py-4 transition-all duration-200",
+        "hover:bg-slate-50 hover:border-slate-300 hover:shadow",
         "active:scale-[0.99]",
-        "focus:outline-none focus-visible:ring-4 focus-visible:ring-indigo-200"
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
       )}
     >
       <div className="flex items-center justify-between gap-4">
@@ -94,17 +105,32 @@ export function Shell({ children }: { children: React.ReactNode }) {
   // Scroll to top on navigation - ensure it happens reliably
   useEffect(() => {
     // Use requestAnimationFrame to ensure DOM is ready
-    requestAnimationFrame(() => {
+    const scrollToTop = () => {
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-      // Also try document.documentElement for better compatibility
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
-    });
+    };
+    
+    // Immediate scroll
+    scrollToTop();
+    
+    // Also try after a brief delay to catch any async route changes
+    const timeoutId = setTimeout(scrollToTop, 50);
+    
+    return () => clearTimeout(timeoutId);
   }, [location.pathname, location.search]);
 
   // Lock body scroll when menu open
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      // When menu closes, restore scroll
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+      document.body.style.width = "";
+      document.body.style.paddingRight = "";
+      return;
+    }
+    
     const prev = {
       htmlOverflow: document.documentElement.style.overflow,
       overflow: document.body.style.overflow,
@@ -117,6 +143,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     document.body.style.overflow = "hidden";
     document.body.style.width = "100%";
     if (scrollbarW > 0) document.body.style.paddingRight = `${scrollbarW}px`;
+    
     return () => {
       document.documentElement.style.overflow = prev.htmlOverflow;
       document.body.style.overflow = prev.overflow;
@@ -572,7 +599,18 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
               {/* Content */}
               <div className="px-5 pb-6 flex-1 overflow-y-auto">
-                <Link to="/book" className="block no-underline">
+                <Link 
+                  to="/book" 
+                  className="block no-underline"
+                  onClick={() => {
+                    setOpen(false);
+                    setTimeout(() => {
+                      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                      document.documentElement.scrollTop = 0;
+                      document.body.scrollTop = 0;
+                    }, 100);
+                  }}
+                >
                   <Button className="w-full py-4 text-base rounded-2xl">
                     Check availability
                   </Button>

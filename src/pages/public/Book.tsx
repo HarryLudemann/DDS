@@ -569,7 +569,7 @@ export default function Book() {
   const visibleDays = grouped;
 
   return (
-    <div className="pb-[calc(env(safe-area-inset-bottom)+112px)] md:pb-0 space-y-6">
+    <div className="pb-[calc(env(safe-area-inset-bottom)+112px)] md:pb-0 space-y-6 min-h-screen">
       <div className="relative overflow-hidden rounded-3xl bg-white ring-1 ring-black/5">
         <div className="absolute -top-20 -right-20 h-72 w-72 rounded-full bg-indigo-600/10 blur-2xl" />
         <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-sky-500/10 blur-2xl" />
@@ -636,13 +636,13 @@ export default function Book() {
                 </div>
 
                 <div className="mt-1 flex flex-wrap gap-2">
-                  <span className="inline-flex items-center rounded-full bg-slate-50 text-slate-700 ring-1 ring-black/5 px-3 py-1 text-[11px] font-extrabold">
+                  <span className="inline-flex items-center rounded-full bg-slate-50 text-slate-700 border border-slate-200 px-3 py-1 text-[11px] font-extrabold">
                     No payment required
                   </span>
-                  <span className="inline-flex items-center rounded-full bg-slate-50 text-slate-700 ring-1 ring-black/5 px-3 py-1 text-[11px] font-extrabold">
+                  <span className="inline-flex items-center rounded-full bg-slate-50 text-slate-700 border border-slate-200 px-3 py-1 text-[11px] font-extrabold">
                     Drop-off only
                   </span>
-                  <span className="inline-flex items-center rounded-full bg-slate-50 text-slate-700 ring-1 ring-black/5 px-3 py-1 text-[11px] font-extrabold">
+                  <span className="inline-flex items-center rounded-full bg-slate-50 text-slate-700 border border-slate-200 px-3 py-1 text-[11px] font-extrabold">
                     Wellington
                   </span>
                 </div>
@@ -817,7 +817,7 @@ export default function Book() {
                   </div>
                 ) : (
                   <>
-                    <div className="rounded-2xl bg-slate-50 ring-1 ring-black/5 p-3">
+                    <div className="rounded-2xl bg-slate-50 border border-slate-200 p-3">
                       <div className="flex items-center justify-between">
                         <div className="text-xs font-extrabold text-slate-700">Day</div>
                       </div>
@@ -839,10 +839,10 @@ export default function Book() {
                                 setStartAt("");
                               }}
                               className={cn(
-                                "shrink-0 rounded-full px-3 py-2 text-xs font-semibold ring-1 transition",
+                                "shrink-0 rounded-full px-3 py-2 text-xs font-semibold border transition-all duration-200",
                                 selected
-                                  ? "bg-indigo-600 text-white ring-0"
-                                  : "bg-white text-slate-700 ring-black/10 hover:bg-slate-50"
+                                  ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                                  : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300"
                               )}
                             >
                               {g.label}
@@ -852,7 +852,7 @@ export default function Book() {
                       </div>
                     </div>
 
-                    <div className="rounded-2xl bg-slate-50 ring-1 ring-black/5 p-3">
+                    <div className="rounded-2xl bg-slate-50 border border-slate-200 p-3">
                       <div className="text-xs font-extrabold text-slate-700">Drop-off window</div>
                       <div className="mt-2 flex flex-wrap gap-2">
                         {windowsForActiveDay.map((w) => {
@@ -865,11 +865,11 @@ export default function Book() {
                               disabled={disabled}
                               onClick={() => setWindowKey(w.key)}
                               className={cn(
-                                "rounded-full px-3 py-2 text-xs font-semibold ring-1 transition",
+                                "rounded-full px-3 py-2 text-xs font-semibold border transition-all duration-200",
                                 selected
-                                  ? "bg-indigo-600 text-white ring-0"
-                                  : "bg-white text-slate-700 ring-black/10 hover:bg-slate-50",
-                                disabled && "opacity-40 cursor-not-allowed hover:bg-white"
+                                  ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                                  : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300",
+                                disabled && "opacity-40 cursor-not-allowed hover:bg-white hover:border-slate-200"
                               )}
                             >
                               {w.label}
@@ -879,17 +879,17 @@ export default function Book() {
                       </div>
                     </div>
 
-                    <div className="rounded-2xl bg-white ring-1 ring-black/10 p-4">
+                    <div className="rounded-2xl bg-white border border-slate-200 p-4">
                       <div className="flex items-center justify-between">
                         <div className="text-xs font-extrabold text-slate-700">Time</div>
                         <button
                           type="button"
                           onClick={() => setShowExactTimes((v) => !v)}
                           className={cn(
-                            "rounded-full px-3 py-2 text-xs font-semibold ring-1 transition",
+                            "rounded-full px-3 py-2 text-xs font-semibold border transition-all duration-200",
                             showExactTimes
-                              ? "bg-indigo-600 text-white ring-0"
-                              : "bg-white text-slate-700 ring-black/10 hover:bg-slate-50"
+                              ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                              : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300"
                           )}
                         >
                           {showExactTimes ? "Use earliest" : "I need a specific time"}
@@ -907,10 +907,10 @@ export default function Book() {
                                   type="button"
                                   onClick={() => setStartAt(t)}
                                   className={cn(
-                                    "rounded-xl px-3 py-2 text-sm font-semibold ring-1 transition",
+                                    "rounded-xl px-3 py-2 text-sm font-semibold border transition-all duration-200",
                                     selected
-                                      ? "bg-indigo-600 text-white ring-0"
-                                      : "bg-slate-50 text-slate-800 ring-black/10 hover:bg-slate-100"
+                                      ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                                      : "bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100 hover:border-slate-300"
                                   )}
                                 >
                                   {fmtTimeNZ(t)}
@@ -919,8 +919,8 @@ export default function Book() {
                             })}
                           </div>
                         ) : (
-                          <div className="mt-3 rounded-2xl bg-slate-50 ring-1 ring-black/5 px-3 py-2 text-sm text-slate-700">
-                            <div className="font-semibold">We’ll take the earliest available time in this window.</div>
+                          <div className="mt-3 rounded-2xl bg-slate-50 border border-slate-200 px-3 py-2 text-sm text-slate-700">
+                            <div className="font-semibold">We'll take the earliest available time in this window.</div>
                             {startAt && (
                               <div className="mt-1 text-xs text-slate-600">Auto-selected: {fmtTimeNZ(startAt)} (NZ time)</div>
                             )}
@@ -1047,7 +1047,7 @@ export default function Book() {
             <Card className="rounded-3xl p-5 sm:p-6 space-y-4">
               <div className="text-sm font-extrabold text-slate-900">Review</div>
 
-              <div className="rounded-2xl bg-slate-50 ring-1 ring-black/5 p-4 space-y-3">
+              <div className="rounded-2xl bg-slate-50 border border-slate-200 p-4 space-y-3">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500">Service</div>
@@ -1130,7 +1130,7 @@ export default function Book() {
             <Card className="rounded-3xl p-5 space-y-4">
               <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500">Your booking</div>
 
-              <div className="rounded-2xl bg-slate-50 ring-1 ring-black/5 p-4">
+              <div className="rounded-2xl bg-slate-50 border border-slate-200 p-4">
                 <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500">Service</div>
                 <div className="mt-1 text-sm font-extrabold text-slate-900">
                   {selectedService ? selectedService.title : "Choose a service"}
@@ -1143,7 +1143,7 @@ export default function Book() {
                 )}
               </div>
 
-              <div className="rounded-2xl bg-slate-50 ring-1 ring-black/5 p-4">
+              <div className="rounded-2xl bg-slate-50 border border-slate-200 p-4">
                 <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500">When</div>
                 <div className="mt-1 text-sm font-semibold text-slate-900">{whenSummary}</div>
               </div>
@@ -1176,7 +1176,7 @@ export default function Book() {
         <div className="pointer-events-none absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-[#f7f7f8] to-transparent" />
         <div className="bg-[#f7f7f8]/95 backdrop-blur border-t border-black/5 px-2 sm:px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
           <div className="mx-auto max-w-6xl pointer-events-auto">
-            <div className="rounded-3xl bg-white ring-1 ring-black/10 shadow-sm">
+            <div className="rounded-3xl bg-white border border-slate-200 shadow-sm">
               <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div className="min-w-0">
                   <div className="text-xs font-extrabold tracking-wider uppercase text-slate-500">Selected</div>
