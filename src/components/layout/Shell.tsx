@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { clsx } from "../../utils/format";
 import { Button } from "../ui/Button";
 import { supabase } from "../../utils/supabase";
@@ -80,23 +80,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   const debugOverflow = useMemo(
     () => {
-      const fromSearch = new URLSearchParams(location.search).get("debugOverflow") === "1";
-      if (fromSearch) return true;
-
-      // HashRouter URLs often look like: /#/path?debugOverflow=1
-      const hash = window.location.hash || "";
-      const qIndex = hash.indexOf("?");
-      if (qIndex === -1) return false;
-      const qs = hash.slice(qIndex + 1);
-      return new URLSearchParams(qs).get("debugOverflow") === "1";
+      return new URLSearchParams(location.search).get("debugOverflow") === "1";
     },
     [location.search]
   );
 
-  const nav = [
-    { to: "/services", label: "Services", sub: "Pricing and inclusions" },
-    { to: "/book", label: "Booking", sub: "Pick a day + drop-off window" },
-  ];
+  // Navigation removed - only Home and Book pages, clear CTAs guide users
 
   // Close menu on route change
   useEffect(() => {
@@ -426,29 +415,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 <span className="mt-1 block h-[2px] w-10 rounded-full bg-indigo-600/70 opacity-70" />
               </Link>
 
-              {/* Desktop nav */}
-              <nav className="hidden md:flex items-center gap-10">
-                {nav.map((n) => (
-                  <NavLink
-                    key={n.to}
-                    to={n.to}
-                    className={({ isActive }) =>
-                      clsx(
-                        "text-sm font-semibold transition",
-                        isActive ? "text-slate-900" : "text-slate-600 hover:text-slate-900"
-                      )
-                    }
-                  >
-                    {n.label}
-                  </NavLink>
-                ))}
-              </nav>
-
-              {/* Desktop actions */}
+              {/* Desktop CTA */}
               <div className="hidden md:flex items-center gap-2">
-                <Link to="/book">
-                  <Button>Check availability</Button>
-                </Link>
+                {location.pathname !== "/book" && (
+                  <Link to="/book">
+                    <Button>Check availability</Button>
+                  </Link>
+                )}
 
                 {isAdmin && (
                   <>
@@ -463,7 +436,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
               </div>
 
               {/* Mobile menu button */}
-              <div className="md:hidden">
+              <div className="md:hidden flex items-center gap-2">
+                {location.pathname !== "/book" && (
+                  <Link to="/book">
+                    <Button className="text-sm py-2 px-4">Check availability</Button>
+                  </Link>
+                )}
                 <button
                   onClick={() => setOpen(true)}
                   className="rounded-2xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-black/5 transition"
@@ -482,7 +460,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <Container>
           <div
             className={clsx(
-              "py-7 sm:py-12 md:py-16 min-w-0",
+              "py-4 sm:py-8 md:py-12 min-w-0",
               showMobileCta && mobileCtaEligible ? "pb-[calc(env(safe-area-inset-bottom)+112px)]" : ""
             )}
           >
@@ -526,39 +504,27 @@ export function Shell({ children }: { children: React.ReactNode }) {
               </div>
 
               <div className="flex flex-col sm:items-end gap-3">
-                <div className="flex flex-wrap gap-2 sm:justify-end">
-                  <Link
-                    to="/services"
-                    className="rounded-xl bg-slate-900/5 px-3 py-2 text-xs font-semibold text-slate-800 visited:text-slate-800 hover:bg-slate-900/10"
-                  >
-                    Services
-                  </Link>
-                  <Link
-                    to="/book"
-                    className="rounded-xl bg-slate-900/5 px-3 py-2 text-xs font-semibold text-slate-800 visited:text-slate-800 hover:bg-slate-900/10"
-                  >
-                    Booking
-                  </Link>
-                  {isAdmin && (
+                {isAdmin && (
+                  <div className="flex flex-wrap gap-2 sm:justify-end">
                     <Link
                       to="/admin"
-                      className="rounded-xl bg-slate-900/5 px-3 py-2 text-xs font-semibold text-slate-800 visited:text-slate-800 hover:bg-slate-900/10"
+                      className="rounded-xl bg-slate-900/5 px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-900/10 transition-colors"
                     >
                       Admin
                     </Link>
-                  )}
-                </div>
+                  </div>
+                )}
 
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 sm:justify-end text-xs font-semibold text-slate-500">
-                  <Link to="/privacy" className="text-slate-500 visited:text-slate-500 hover:text-slate-700">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 sm:justify-end text-xs font-medium">
+                  <Link to="/privacy" className="text-slate-500 hover:text-slate-900 transition-colors">
                     Privacy Policy
                   </Link>
                   <span aria-hidden="true" className="text-slate-300">•</span>
-                  <Link to="/cookies" className="text-slate-500 visited:text-slate-500 hover:text-slate-700">
+                  <Link to="/cookies" className="text-slate-500 hover:text-slate-900 transition-colors">
                     Cookie Policy
                   </Link>
                   <span aria-hidden="true" className="text-slate-300">•</span>
-                  <Link to="/terms" className="text-slate-500 visited:text-slate-500 hover:text-slate-700">
+                  <Link to="/terms" className="text-slate-500 hover:text-slate-900 transition-colors">
                     Terms
                   </Link>
                 </div>
@@ -635,21 +601,6 @@ export function Shell({ children }: { children: React.ReactNode }) {
                     Check availability
                   </Button>
                 </Link>
-
-                <div className="mt-5 space-y-3">
-                  <MenuCard
-                    to="/services"
-                    title="Services"
-                    subtitle="Pricing and inclusions"
-                    onClick={() => setOpen(false)}
-                  />
-                  <MenuCard
-                    to="/book"
-                    title="Booking"
-                    subtitle="Pick a day + drop-off window"
-                    onClick={() => setOpen(false)}
-                  />
-                </div>
 
                 {isAdmin && (
                   <div className="mt-6 pt-5 border-t border-black/5 space-y-3">

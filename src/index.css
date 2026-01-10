@@ -41,3 +41,20 @@ body {
   html, body { overflow-x: clip !important; }
   html, body, #root { overflow-x: clip !important; }
 }
+
+/* Link styling - remove underlines, add smooth transitions */
+a {
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  text-decoration: none;
+}
+
+/* Ensure Link components from react-router-dom don't have underlines */
+a[href], 
+[role="link"] {
+  text-decoration: none;
+}

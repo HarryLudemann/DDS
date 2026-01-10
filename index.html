@@ -45,9 +45,51 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=1" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=1" />
   <link rel="manifest" href="/site.webmanifest?v=1" />
-  <!-- <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" /> -->
-  <!-- <link rel="apple-touch-icon" href="/apple-touch-icon.png" /> -->
-  <!-- <link rel="manifest" href="/site.webmanifest" /> -->
+
+  <!-- JSON-LD Structured Data for Organization (helps Google show logo) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "@id": "https://dds.harryludemann.com/#organization",
+    "name": "Dylan's Detailing Service",
+    "description": "Professional car detailing in Wellington. Choose a service, pick an available time, and book online.",
+    "url": "https://dds.harryludemann.com/",
+    "logo": "https://dds.harryludemann.com/android-chrome-512x512.png",
+    "image": "https://dds.harryludemann.com/android-chrome-512x512.png",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Wellington",
+      "addressRegion": "Wellington",
+      "addressCountry": "NZ"
+    },
+    "areaServed": {
+      "@type": "City",
+      "name": "Wellington"
+    },
+    "priceRange": "$$",
+    "serviceType": "Car Detailing",
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "reviewCount": "10"
+    }
+  }
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": "https://dds.harryludemann.com/#website",
+    "url": "https://dds.harryludemann.com/",
+    "name": "Dylan's Detailing Service",
+    "description": "Professional car detailing in Wellington. Choose a service, pick an available time, and book online.",
+    "publisher": {
+      "@id": "https://dds.harryludemann.com/#organization"
+    }
+  }
+  </script>
 </head>
 
   <body>

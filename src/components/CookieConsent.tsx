@@ -58,7 +58,7 @@ export function CookieConsent() {
               <div className="text-sm font-extrabold text-slate-900">Cookies</div>
               <div className="mt-1 text-sm text-slate-600">
                 We use essential cookies/storage to run this site and remember your preferences. See our{" "}
-                <Link to="/cookies" className="font-semibold text-slate-700 hover:text-slate-900 underline underline-offset-2">
+                <Link to="/cookies" className="font-semibold text-slate-700 hover:text-slate-900 transition-colors">
                   Cookie Policy
                 </Link>
                 .

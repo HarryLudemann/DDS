@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "../../utils/supabase";
 import { fmtMoney, fmtTimeNZ, NZ_TZ } from "../../utils/format";
 import { Card } from "../../components/ui/Card";
@@ -10,6 +10,7 @@ import { Select } from "../../components/ui/Select";
 import { Textarea } from "../../components/ui/Textarea";
 import { useServices } from "../../hooks/useServices";
 import { amountsForCustomerPrice, GST_RATE, TAX_MODE, taxLabelShort } from "../../utils/tax";
+import { SEO } from "../../components/SEO";
 
 const WINDOWS = [
   { key: "early", label: "Early (8–10am)", startMins: 8 * 60, endMins: 10 * 60 },
@@ -632,23 +633,29 @@ export default function Book() {
   const visibleDays = grouped;
 
   return (
-    <div className="pb-[calc(env(safe-area-inset-bottom)+140px)] md:pb-0 space-y-6 min-h-screen">
-      <div className="relative overflow-hidden rounded-3xl bg-white ring-1 ring-black/5">
+    <>
+      <SEO
+        title="Book Appointment | Check Availability"
+        description="Book your car detailing service in Wellington. Choose a service, pick a day and drop-off window, and complete your booking online."
+        canonical="https://dds.harryludemann.com/book"
+      />
+      <div className="pb-[calc(env(safe-area-inset-bottom)+140px)] md:pb-0 space-y-4 sm:space-y-5 md:space-y-6 min-h-screen">
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-white ring-1 ring-black/5">
         <div className="absolute -top-20 -right-20 h-72 w-72 rounded-full bg-indigo-600/10 blur-2xl" />
         <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-sky-500/10 blur-2xl" />
 
-        <div className="relative p-6 sm:p-8">
+        <div className="relative p-5 sm:p-7 md:p-8">
           <div className="inline-flex items-center rounded-full bg-indigo-600/10 text-indigo-700 ring-1 ring-indigo-600/15 px-3 py-1 text-xs font-extrabold">
             Live availability (NZ time)
           </div>
-          <h1 className="mt-3 text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900">
+          <h1 className="mt-3 text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900">
             Book a detail
           </h1>
-          <p className="mt-2 text-slate-600 max-w-2xl">Pick a service → choose a day + drop-off window → enter details. Done.</p>
+          <p className="mt-2 text-sm sm:text-base text-slate-600 max-w-2xl">Pick a service → choose a day + drop-off window → enter details. Done.</p>
         </div>
       </div>
 
-      <Card className="rounded-3xl p-4 sm:p-5">
+      <Card className="rounded-2xl sm:rounded-3xl p-4 sm:p-5">
         <div className="flex flex-wrap items-center gap-2">
             {([
             { n: 1, label: "Service" },
@@ -686,29 +693,15 @@ export default function Book() {
         <div className="mt-1 text-sm text-slate-600 max-w-3xl">{stepHint}</div>
       </Card>
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
-        <div className="min-w-0 space-y-6">
+      <div className="grid gap-4 sm:gap-5 md:gap-6 xl:grid-cols-[1fr_360px]">
+        <div className="min-w-0 space-y-4 sm:space-y-5 md:space-y-6">
           {step === 1 && (
-            <Card className="rounded-3xl p-5 sm:p-6 space-y-5">
+            <Card className="rounded-2xl sm:rounded-3xl p-5 sm:p-6 space-y-4 sm:space-y-5">
               <div className="space-y-2">
                 <div className="flex items-baseline justify-between">
                   <div className="text-sm font-extrabold text-slate-900">Service</div>
-                  <Link to="/services" className="text-xs font-semibold text-slate-500 hover:text-slate-700">
-                    View all services
-                  </Link>
                 </div>
 
-                <div className="mt-1 flex flex-wrap gap-2">
-                  <span className="inline-flex items-center rounded-full bg-slate-50 text-slate-700 border border-slate-200 px-3 py-1 text-[11px] font-extrabold">
-                    No payment required
-                  </span>
-                  <span className="inline-flex items-center rounded-full bg-slate-50 text-slate-700 border border-slate-200 px-3 py-1 text-[11px] font-extrabold">
-                    Drop-off only
-                  </span>
-                  <span className="inline-flex items-center rounded-full bg-slate-50 text-slate-700 border border-slate-200 px-3 py-1 text-[11px] font-extrabold">
-                    Wellington
-                  </span>
-                </div>
 
                 {loadingServices ? (
                   <div className="text-sm text-slate-600">Loading services…</div>
@@ -718,7 +711,7 @@ export default function Book() {
                     <div className="mt-2 text-sm text-slate-600">Please check back later or contact us for more information.</div>
                   </div>
                 ) : (
-                  <div className="grid gap-6 xl:grid-cols-2">
+                  <div className="grid gap-4 sm:gap-5 md:gap-6 xl:grid-cols-2">
                     {services.map((s) => {
                       const selected = s.id === serviceId;
                       return (
@@ -732,7 +725,7 @@ export default function Book() {
                             setStartAt("");
                           }}
                           className={cn(
-                            "group relative overflow-hidden rounded-3xl text-left transition-all duration-200",
+                            "group relative overflow-hidden rounded-2xl sm:rounded-3xl text-left transition-all duration-200",
                             "bg-white",
                             "ring-1 shadow-sm",
                             "hover:-translate-y-0.5 hover:shadow-md hover:ring-black/15",
@@ -830,7 +823,7 @@ export default function Book() {
           )}
 
           {step === 2 && (
-            <Card className="rounded-3xl p-5 sm:p-6 space-y-5">
+            <Card className="rounded-2xl sm:rounded-3xl p-5 sm:p-6 space-y-4 sm:space-y-5">
               <div className="space-y-3">
                 <div className="flex items-baseline justify-between">
                   <div className="text-sm font-extrabold text-slate-900">Schedule</div>
@@ -874,12 +867,8 @@ export default function Book() {
                 ) : grouped.length === 0 ? (
                   <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600 ring-1 ring-black/5">
                     <div>No available times in the next 3 weeks.</div>
-                    <div className="mt-3">
-                      <Link to="/services" className="w-full sm:w-auto">
-                        <Button variant="ghost" className="w-full sm:w-auto">
-                          View services
-                        </Button>
-                      </Link>
+                    <div className="mt-2 text-xs text-slate-500">
+                      Please check back later or contact us for more information.
                     </div>
                   </div>
                 ) : (
@@ -1276,6 +1265,7 @@ export default function Book() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

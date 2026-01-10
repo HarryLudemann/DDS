@@ -2,8 +2,10 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { Shell } from "./components/layout/Shell";
 
 import Home from "./pages/public/Home";
-import Services from "./pages/public/Services";
 import Book from "./pages/public/Book";
+import Interior from "./pages/public/Interior";
+import Paint from "./pages/public/Paint";
+import Glass from "./pages/public/Glass";
 import Privacy from "./pages/public/Privacy";
 import Cookies from "./pages/public/Cookies";
 import Terms from "./pages/public/Terms";
@@ -21,8 +23,10 @@ export default function App() {
     <Shell>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/services" element={<Services />} />
         <Route path="/book" element={<Book />} />
+        <Route path="/interior" element={<Interior />} />
+        <Route path="/paint" element={<Paint />} />
+        <Route path="/glass" element={<Glass />} />
 
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/cookies" element={<Cookies />} />
