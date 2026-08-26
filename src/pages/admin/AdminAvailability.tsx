@@ -1,7 +1,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "../../utils/supabase";
+import { deactivateRulesForDow, listAvailabilityRules, saveAvailabilityRule } from "../../lib/firebase/store";
 import type { AvailabilityRule } from "../../types/db";
 import { NZ_TZ } from "../../utils/format";
 import { Card } from "../../components/ui/Card";
@@ -69,43 +69,36 @@ export default function AdminAvailability() {
       setLoading(true);
       setStatus(null);
 
-      const { data, error } = await supabase
-        .from("availability_rules")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        setStatus(error.message);
-        setLoading(false);
-        return;
-      }
-
-      // Pick the newest ACTIVE rule per day
-      const newestByDow = new Map<number, AvailabilityRule>();
-      for (const r of data ?? []) {
-        if (!r.active) continue;
-        if (!newestByDow.has(r.dow)) newestByDow.set(r.dow, r as AvailabilityRule);
-      }
-
-      setDraft(() => {
-        const next = {} as Record<DayKey, DayDraft>;
-        for (const d of DAYS) {
-          const r = newestByDow.get(d.key);
-          if (r) {
-            next[d.key] = {
-              id: r.id,
-              enabled: true,
-              start: timeFromDb(r.start_time),
-              end: timeFromDb(r.end_time),
-            };
-          } else {
-            next[d.key] = { enabled: false, start: "08:00", end: "17:00" };
-          }
+      try {
+        const data = await listAvailabilityRules();
+        const newestByDow = new Map<number, AvailabilityRule>();
+        for (const r of [...data].sort((a, b) => b.created_at.localeCompare(a.created_at))) {
+          if (!r.active) continue;
+          if (!newestByDow.has(r.dow)) newestByDow.set(r.dow, r);
         }
-        return next;
-      });
 
-      setLoading(false);
+        setDraft(() => {
+          const next = {} as Record<DayKey, DayDraft>;
+          for (const d of DAYS) {
+            const r = newestByDow.get(d.key);
+            if (r) {
+              next[d.key] = {
+                id: r.id,
+                enabled: true,
+                start: timeFromDb(r.start_time),
+                end: timeFromDb(r.end_time),
+              };
+            } else {
+              next[d.key] = { enabled: false, start: "08:00", end: "17:00" };
+            }
+          }
+          return next;
+        });
+      } catch (e) {
+        setStatus(e instanceof Error ? e.message : "Failed to load availability.");
+      } finally {
+        setLoading(false);
+      }
     })();
   }, []);
 
@@ -162,21 +155,12 @@ export default function AdminAvailability() {
       for (const d of DAYS) {
         const row = draft[d.key];
 
-        // Step 1: Deactivate ALL active rules for this day-of-week
-        // This must happen first to avoid unique constraint issues
-        const { error: deactivateError } = await supabase
-          .from("availability_rules")
-          .update({ active: false })
-          .eq("dow", d.key)
-          .eq("active", true);
-        if (deactivateError) throw deactivateError;
+        await deactivateRulesForDow(d.key);
 
-        // Step 2: If this day is disabled, we're done (already deactivated above)
         if (!row.enabled) {
           continue;
         }
 
-        // Step 3: Activate the rule for this day
         const payload = {
           dow: d.key,
           start_time: timeToDb(row.start),
@@ -186,27 +170,11 @@ export default function AdminAvailability() {
           active: true,
         };
 
-        if (row.id) {
-          // Update existing rule (safe: all other rules for this dow are now inactive)
-          const { error: updateError } = await supabase
-            .from("availability_rules")
-            .update(payload)
-            .eq("id", row.id);
-          if (updateError) throw updateError;
-        } else {
-          // Insert new rule (safe: all other rules for this dow are now inactive)
-          const { data: inserted, error: insertError } = await supabase
-            .from("availability_rules")
-            .insert(payload)
-            .select("id")
-            .single();
-          if (insertError) throw insertError;
-
-          setDraft((prev) => ({
-            ...prev,
-            [d.key]: { ...prev[d.key], id: inserted.id },
-          }));
-        }
+        const id = await saveAvailabilityRule(row.id, payload);
+        setDraft((prev) => ({
+          ...prev,
+          [d.key]: { ...prev[d.key], id },
+        }));
       }
 
       setStatus("Saved. Booking availability will update automatically.");

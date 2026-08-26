@@ -1,25 +1,31 @@
-# Server Configuration for BrowserRouter
+# SPA hosting
 
-Your app now uses **BrowserRouter** instead of HashRouter, which means URLs are clean (`/book` instead of `/#/book`). 
+This app uses **React Router** (`BrowserRouter`). Direct requests to `/book`, `/admin`, etc. must serve `index.html` so the client can route.
 
-## ✅ Netlify (Current Setup)
+**Current host is Firebase Hosting.** Rewrites live in `firebase.json`:
 
-The `public/_redirects` file already has the correct configuration:
+```json
+"rewrites": [{ "source": "**", "destination": "/index.html" }]
 ```
-/*    /index.html   200
-```
 
-This redirects all routes to `index.html` so React Router can handle client-side routing. **No changes needed!**
+`public/_redirects` is a leftover Netlify file. Firebase ignores it. Prefer changing `firebase.json` if hosting behaviour needs to change.
+
+Setup, env, admin, and deploy are in [README.md](README.md).
 
 ---
 
-## Alternative Server Configurations
+## If you leave Firebase Hosting
 
-If you switch hosting providers, use one of these configurations:
+### Nginx
 
-### Apache (.htaccess)
+```nginx
+location / {
+  try_files $uri $uri/ /index.html;
+}
+```
 
-Create `public/.htaccess`:
+### Apache (`public/.htaccess` if the host serves that folder)
+
 ```apache
 <IfModule mod_rewrite.c>
   RewriteEngine On
@@ -31,39 +37,10 @@ Create `public/.htaccess`:
 </IfModule>
 ```
 
-### Nginx
+### Netlify
 
-Add to your nginx config:
-```nginx
-location / {
-  try_files $uri $uri/ /index.html;
-}
+```
+/*    /index.html   200
 ```
 
-### Vercel
-
-Create `vercel.json` in project root:
-```json
-{
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
-}
-```
-
-### GitHub Pages / Static Hosting
-
-For static hosting, you may need to stick with HashRouter OR use a service that supports SPA routing.
-
----
-
-## Testing
-
-After deploying, test these URLs:
-- ✅ `https://yoursite.com/` (homepage)
-- ✅ `https://yoursite.com/book` (booking page)
-- ✅ `https://yoursite.com/interior` (interior service)
-- ✅ Direct navigation (typing URL directly in browser)
-- ✅ Browser back/forward buttons
-
-All should work without 404 errors!
+Do not use HashRouter (`/#/book`) unless you have no control over the server.

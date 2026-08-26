@@ -2,7 +2,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { clsx } from "../../utils/format";
 import { Button } from "../ui/Button";
-import { supabase } from "../../utils/supabase";
+import { onAuthStateChanged, signOut as firebaseSignOut } from "firebase/auth";
+import { auth, isFirebaseConfigured } from "../../utils/firebase";
+import { isAdminUser } from "../../lib/firebase/store";
 import { CookieConsent, hasCookieConsent } from "../CookieConsent";
 
 function Container({ children }: { children: React.ReactNode }) {
@@ -259,32 +261,27 @@ export function Shell({ children }: { children: React.ReactNode }) {
         if (mounted) setIsAdmin(false);
         return;
       }
-      const { data: prof } = await supabase
-        .from("profiles")
-        .select("is_admin")
-        .eq("id", userId)
-        .maybeSingle();
-
-      if (mounted) setIsAdmin(!!prof?.is_admin);
+      const admin = await isAdminUser(userId);
+      if (mounted) setIsAdmin(admin);
     }
 
-    (async () => {
-      const { data } = await supabase.auth.getSession();
-      await refreshAdmin(data.session?.user?.id);
-    })();
+    if (!isFirebaseConfigured || !auth) {
+      setIsAdmin(false);
+      return;
+    }
 
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_evt, session) => {
-      await refreshAdmin(session?.user?.id);
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      await refreshAdmin(user?.uid);
     });
 
     return () => {
       mounted = false;
-      sub.subscription.unsubscribe();
+      unsub();
     };
   }, []);
 
   async function signOut() {
-    await supabase.auth.signOut();
+    if (auth) await firebaseSignOut(auth);
   }
 
   const showMobileCta =
@@ -403,6 +400,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
       )}
 
       <CookieConsent />
+      {!isFirebaseConfigured && (
+        <div className="bg-amber-50 border-b border-amber-200/70 text-amber-950 text-xs sm:text-sm px-4 py-2 text-center">
+          The site is running, but bookings need Firebase keys in a <span className="font-semibold">.env</span> file.
+        </div>
+      )}
       {/* HEADER */}
       <header className="sticky top-0 z-40 bg-[#f7f7f8]/90 backdrop-blur">
         <div className="border-b border-black/5">

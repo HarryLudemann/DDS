@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "../../utils/supabase";
+import { listAllServices } from "../../lib/firebase/store";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
@@ -22,12 +22,6 @@ type PackageRow = {
   service_id: string | null;
 };
 
-function toCents(v: string) {
-  const n = Number(v);
-  if (!Number.isFinite(n)) return 0;
-  return Math.round(n * 100);
-}
-
 function fromCents(cents: number) {
   return ((cents ?? 0) / 100).toFixed(2);
 }
@@ -35,13 +29,6 @@ function fromCents(cents: number) {
 function toLines(v: unknown): string {
   if (Array.isArray(v)) return v.filter((x) => typeof x === "string").join("\n");
   return "";
-}
-
-function parseLines(v: string): string[] {
-  return v
-    .split("\n")
-    .map((x) => x.trim())
-    .filter(Boolean);
 }
 
 export default function AdminPackages() {
@@ -76,21 +63,26 @@ export default function AdminPackages() {
       setLoading(true);
       setStatus(null);
 
-      const [{ data: svcData, error: svcErr }, { data: pkgData, error: pkgErr }] = await Promise.all([
-        supabase.from("services").select("id,title").order("sort_order", { ascending: true }),
-        supabase
-          .from("packages")
-          .select("code,title,subtitle,summary,includes,ideal_for,from_price_cents,active,service_id")
-          .order("code", { ascending: true }),
-      ]);
-
-      if (!alive) return;
-
-      if (svcErr) setStatus(svcErr.message);
-      setServices((svcData ?? []) as ServiceRow[]);
-
-      if (pkgErr) setStatus(pkgErr.message);
-      setRows((pkgData ?? []) as PackageRow[]);
+      try {
+        const svcData = await listAllServices();
+        if (!alive) return;
+        setServices(svcData.map((s) => ({ id: s.id, title: s.title })));
+        setRows(
+          PACKAGES.map((p) => ({
+            code: p.code,
+            title: p.title,
+            subtitle: p.subtitle,
+            summary: p.summary,
+            includes: p.includes,
+            ideal_for: p.idealFor,
+            from_price_cents: p.fromPriceCents,
+            active: true,
+            service_id: svcData.find((s) => s.title === p.title)?.id ?? null,
+          }))
+        );
+      } catch (e) {
+        if (alive) setStatus(e instanceof Error ? e.message : "Failed to load.");
+      }
 
       setLoading(false);
     })();
@@ -118,42 +110,7 @@ export default function AdminPackages() {
     if (!activeCode) return;
 
     setSaving(true);
-    setStatus(null);
-
-    const payload = {
-      code: activeCode,
-      title: title.trim() || activeCode,
-      subtitle: subtitle.trim() || null,
-      summary: summary.trim() || null,
-      from_price_cents: toCents(price),
-      includes: parseLines(includesText),
-      ideal_for: parseLines(idealForText),
-      active,
-      service_id: serviceId || null,
-    };
-
-    const { error } = await supabase.from("packages").upsert(payload, { onConflict: "code" });
-    if (error) {
-      setStatus(error.message);
-      setSaving(false);
-      return;
-    }
-
-    try {
-      window.localStorage.setItem("dds_packages_updated_at", String(Date.now()));
-    } catch {
-    }
-    window.dispatchEvent(new Event("dds_packages_updated"));
-
-    const { data: pkgData, error: pkgErr } = await supabase
-      .from("packages")
-      .select("code,title,subtitle,summary,includes,ideal_for,from_price_cents,active,service_id")
-      .order("code", { ascending: true });
-
-    if (pkgErr) setStatus(pkgErr.message);
-    setRows((pkgData ?? []) as PackageRow[]);
-
-    setStatus("Saved.");
+    setStatus("Package copy is now edited as services. Use Admin → Services.");
     setSaving(false);
   }
 

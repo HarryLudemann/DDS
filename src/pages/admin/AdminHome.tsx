@@ -1,9 +1,35 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Page } from "../../components/layout/Page";
+import { seedDefaults } from "../../lib/firebase/store";
 
 export default function AdminHome() {
+  const [seedStatus, setSeedStatus] = useState<string | null>(null);
+  const [seeding, setSeeding] = useState(false);
+
+  async function seed() {
+    setSeeding(true);
+    setSeedStatus(null);
+    try {
+      const result = await seedDefaults();
+      setSeedStatus(result.reason);
+      if (result.seeded) {
+        try {
+          window.localStorage.setItem("dds_services_updated_at", String(Date.now()));
+        } catch {
+          /* ignore */
+        }
+        window.dispatchEvent(new Event("dds_services_updated"));
+      }
+    } catch (e) {
+      setSeedStatus(e instanceof Error ? e.message : "Seed failed.");
+    } finally {
+      setSeeding(false);
+    }
+  }
+
   return (
     <Page>
       <div className="mx-auto w-full max-w-5xl space-y-6">
@@ -53,6 +79,17 @@ export default function AdminHome() {
                 View bookings
               </Button>
             </Link>
+          </Card>
+
+          <Card className="p-6 space-y-3">
+            <div className="text-sm font-extrabold text-slate-900">First-time setup</div>
+            <div className="text-sm text-slate-600">
+              Load the default packages and 8am–5pm hours if Firestore is empty.
+            </div>
+            <Button className="mt-2" variant="secondary" disabled={seeding} onClick={seed}>
+              {seeding ? "Seeding…" : "Seed default catalogue"}
+            </Button>
+            {seedStatus && <p className="text-sm text-slate-600">{seedStatus}</p>}
           </Card>
         </div>
       </div>

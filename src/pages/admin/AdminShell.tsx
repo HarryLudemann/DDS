@@ -1,5 +1,6 @@
 import { Link, NavLink } from "react-router-dom";
-import { supabase } from "../../utils/supabase";
+import { signOut } from "firebase/auth";
+import { auth } from "../../utils/firebase";
 import { clsx } from "../../utils/format";
 import { Button } from "../../components/ui/Button";
 
@@ -12,7 +13,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           <div className="text-sm font-semibold">Admin</div>
           <Button
             variant="secondary"
-            onClick={() => supabase.auth.signOut().then(() => (window.location.href = "/"))}
+            onClick={() => auth && signOut(auth).then(() => (window.location.href = "/"))}
           >
             Sign out
           </Button>

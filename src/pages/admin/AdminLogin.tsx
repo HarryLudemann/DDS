@@ -1,6 +1,9 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { supabase } from "../../utils/supabase";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { auth, isFirebaseConfigured } from "../../utils/firebase";
+import { ensureProfile, isAdminUser } from "../../lib/firebase/store";
+import { AdminButton, AdminField, AdminInput } from "./ui";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
@@ -9,7 +12,7 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
 
   const nav = useNavigate();
-  const loc = useLocation() as any;
+  const loc = useLocation() as { state?: { from?: string } };
   const from = loc.state?.from ?? "/admin";
 
   async function signIn(e: React.FormEvent) {
@@ -17,80 +20,74 @@ export default function AdminLogin() {
     setLoading(true);
     setStatus(null);
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) {
+    if (!auth) {
       setLoading(false);
-      setStatus(error.message);
+      setStatus("Firebase is not configured. Add the VITE_FIREBASE keys to .env and restart the dev server.");
       return;
     }
 
-    const uid = data.session?.user?.id;
-    if (!uid) {
+    try {
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      await ensureProfile(cred.user.uid);
+      const admin = await isAdminUser(cred.user.uid);
+      if (!admin) {
+        await signOut(auth);
+        setStatus("This account is not an admin yet. In Firebase Console → Firestore, set profiles/{uid}.is_admin to true, then sign in again.");
+        return;
+      }
+      nav(from, { replace: true });
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : "Sign in failed.");
+    } finally {
       setLoading(false);
-      setStatus("No session found after sign-in.");
-      return;
     }
-
-    // Verify admin
-    const { data: prof, error: profErr } = await supabase
-      .from("profiles")
-      .select("is_admin")
-      .eq("id", uid)
-      .maybeSingle();
-
-    if (profErr || !prof?.is_admin) {
-      await supabase.auth.signOut();
-      setLoading(false);
-      setStatus("This account is not an admin.");
-      return;
-    }
-
-    setLoading(false);
-    nav(from, { replace: true });
   }
 
   return (
-    <div className="mx-auto max-w-md px-4 py-10">
-      <div className="rounded-3xl bg-white ring-1 ring-black/10 shadow-soft p-6 sm:p-8">
-        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Admin sign in</h1>
-        <p className="mt-1 text-sm text-slate-600">Use your admin email and password.</p>
+    <div className="mx-auto flex min-h-[100svh] max-w-md flex-col justify-center px-4 py-12">
+      <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--admin-muted)]">Studio</p>
+      <h1 className="mt-2 text-3xl font-medium tracking-tight">Sign in</h1>
+      <p className="mt-2 text-sm leading-relaxed text-[var(--admin-muted)]">
+        Manage bookings, services, and hours.
+      </p>
 
-        <form onSubmit={signIn} className="mt-6 space-y-3">
-          <div>
-            <label className="text-sm font-semibold text-slate-700">Email</label>
-            <input
-              className="mt-2 w-full rounded-xl bg-slate-50 px-3 py-2 text-sm ring-1 ring-black/10 outline-none focus-visible:ring-4 focus-visible:ring-indigo-200"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-              required
-            />
-          </div>
+      {!isFirebaseConfigured && (
+        <p className="mt-6 border border-[var(--admin-line)] bg-white px-4 py-3 text-sm">
+          Firebase keys are missing from <span className="font-medium">.env</span>.
+        </p>
+      )}
 
-          <div>
-            <label className="text-sm font-semibold text-slate-700">Password</label>
-            <input
-              className="mt-2 w-full rounded-xl bg-slate-50 px-3 py-2 text-sm ring-1 ring-black/10 outline-none focus-visible:ring-4 focus-visible:ring-indigo-200"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              required
-            />
-          </div>
+      <form onSubmit={signIn} className="mt-8 space-y-5">
+        <AdminField label="Email" htmlFor="admin-email">
+          <AdminInput
+            id="admin-email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </AdminField>
+        <AdminField label="Password" htmlFor="admin-password">
+          <AdminInput
+            id="admin-password"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </AdminField>
+        <AdminButton type="submit" className="w-full" disabled={loading}>
+          {loading ? "Signing in…" : "Sign in"}
+        </AdminButton>
+      </form>
 
-          <button
-            disabled={loading}
-            className="mt-2 w-full rounded-2xl bg-indigo-600 text-white font-semibold py-3 disabled:opacity-60"
-          >
-            {loading ? "Signing in…" : "Sign in"}
-          </button>
-        </form>
+      {status && <p className="mt-5 text-sm leading-relaxed text-[var(--admin-ink)]">{status}</p>}
 
-        {status && <p className="mt-4 text-sm text-slate-700">{status}</p>}
-      </div>
+      <Link to="/" className="mt-10 text-sm text-[var(--admin-muted)] hover:text-[var(--admin-ink)]">
+        Back to site
+      </Link>
     </div>
   );
 }

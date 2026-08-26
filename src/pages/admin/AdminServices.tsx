@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "../../utils/supabase";
+import { listAllServices, createService, updateService, deleteService } from "../../lib/firebase/store";
 import type { Service } from "../../types/db";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
@@ -61,14 +61,12 @@ export default function AdminServices() {
     setLoading(true);
     setStatus(null);
 
-    const { data, error } = await supabase
-      .from("services")
-      .select("*")
-      .order("sort_order", { ascending: true })
-      .order("title", { ascending: true });
-
-    if (error) setStatus(error.message);
-    setRows((data ?? []) as Service[]);
+    try {
+      const data = await listAllServices();
+      setRows(data);
+    } catch (e) {
+      setStatus(e instanceof Error ? e.message : "Failed to load services.");
+    }
     setLoading(false);
   }
 
@@ -117,12 +115,15 @@ export default function AdminServices() {
       };
 
       if (editingId) {
-        const { error } = await supabase.from("services").update(payload).eq("id", editingId);
-        if (error) throw error;
+        await updateService(editingId, payload);
         setStatus("Service updated.");
       } else {
-        const { error } = await supabase.from("services").insert(payload).select("id").single();
-        if (error) throw error;
+        await createService({
+          ...payload,
+          subtitle: payload.subtitle,
+          summary: payload.summary,
+          description: payload.description,
+        });
         setStatus("Service created.");
       }
 
@@ -163,22 +164,24 @@ export default function AdminServices() {
 
   async function toggleActive(s: Service) {
     setStatus(null);
-    const { error } = await supabase.from("services").update({ active: !s.active }).eq("id", s.id);
-    if (error) setStatus(error.message);
-    else await load();
+    try {
+      await updateService(s.id, { active: !s.active });
+      await load();
+    } catch (e) {
+      setStatus(e instanceof Error ? e.message : "Failed to update.");
+    }
   }
 
   async function remove(s: Service) {
     if (!confirm(`Delete "${s.title}"? This can't be undone.`)) return;
     setStatus(null);
 
-    const { error } = await supabase.from("services").delete().eq("id", s.id);
-    if (error) {
-      // likely blocked if referenced by bookings (FK restrict)
-      setStatus(error.message);
-    } else {
+    try {
+      await deleteService(s.id);
       await load();
       setStatus("Service deleted.");
+    } catch (e) {
+      setStatus(e instanceof Error ? e.message : "Failed to delete.");
     }
   }
 

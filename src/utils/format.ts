@@ -45,7 +45,13 @@ export function fmtMoneyNZD(cents: number) {
 
 export function fmtMoney(cents: number) {
   const n = (cents ?? 0) / 100;
-  return n.toLocaleString("en-NZ", { style: "currency", currency: "NZD" });
+  const whole = Number.isInteger(n);
+  return n.toLocaleString("en-NZ", {
+    style: "currency",
+    currency: "NZD",
+    minimumFractionDigits: whole ? 0 : 2,
+    maximumFractionDigits: whole ? 0 : 2,
+  });
 }
 
 export function fmtDuration(mins: number) {

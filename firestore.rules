@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
+        && get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.is_admin == true;
+    }
+
+    match /services/{id} {
+      allow read: if resource.data.active == true || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /availabilityRules/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /bookings/{id} {
+      allow create: if request.resource.data.status == 'confirmed'
+        && request.resource.data.customer_name is string
+        && request.resource.data.customer_email is string
+        && request.resource.data.service_id is string
+        && request.resource.data.start_at is timestamp
+        && request.resource.data.end_at is timestamp
+        && request.resource.data.end_at > request.resource.data.start_at
+        && request.resource.data.start_at > request.time;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /profiles/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.is_admin == false;
+      allow update, delete: if isAdmin();
+    }
+  }
+}

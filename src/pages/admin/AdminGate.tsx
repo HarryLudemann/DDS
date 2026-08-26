@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { supabase } from "../../utils/supabase";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../../utils/firebase";
+import { isAdminUser } from "../../lib/firebase/store";
 
 export default function AdminGate({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
@@ -8,43 +10,34 @@ export default function AdminGate({ children }: { children: React.ReactNode }) {
   const location = useLocation();
 
   useEffect(() => {
-    let alive = true;
+    if (!auth) {
+      setIsAdmin(false);
+      setLoading(false);
+      return;
+    }
 
-    async function check() {
-      const { data } = await supabase.auth.getSession();
-      const session = data.session;
-
-      if (!session?.user?.id) {
-        if (!alive) return;
+    return onAuthStateChanged(auth, async (user) => {
+      if (!user) {
         setIsAdmin(false);
         setLoading(false);
         return;
       }
-
-      const { data: prof } = await supabase
-        .from("profiles")
-        .select("is_admin")
-        .eq("id", session.user.id)
-        .maybeSingle();
-
-      if (!alive) return;
-      setIsAdmin(!!prof?.is_admin);
+      const admin = await isAdminUser(user.uid);
+      setIsAdmin(admin);
       setLoading(false);
-    }
-
-    check();
-
-    const { data: sub } = supabase.auth.onAuthStateChange(() => check());
-    return () => {
-      alive = false;
-      sub.subscription.unsubscribe();
-    };
+    });
   }, []);
 
-  if (loading) return <div style={{ padding: 16 }}>Loading…</div>;
+  if (loading) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center text-sm text-[var(--admin-muted)]">
+        Loading…
+      </div>
+    );
+  }
 
   if (!isAdmin) {
-    return <Navigate to="/admin/login" replace state={{ from: location.pathname }} />;
+    return <Navigate to="/admin/login" replace state={{ from: `${location.pathname}${location.search}` }} />;
   }
 
   return <>{children}</>;

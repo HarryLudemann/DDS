@@ -55,7 +55,7 @@ export const PACKAGES: Package[] = [
     subtitle: "Full reset (3–5 hrs)",
     fromPriceCents: 35000,
     summary:
-      "The full reset for most one-off customers. Starting price varies by vehicle size + condition — Dylan confirms after a quick look (or photos).",
+      "The full reset for most one-off customers. Starting price varies by vehicle size and condition — confirmed after a quick look (or photos).",
     includes: [
       "Full exterior wash + decon (bug / tar)",
       "Wheels / arches",

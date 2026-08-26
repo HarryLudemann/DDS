@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "../../utils/supabase";
+import { deleteBooking as deleteBookingDoc, listBookings, updateBookingMeta } from "../../lib/firebase/store";
 import type { Booking, Service } from "../../types/db";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
@@ -30,33 +30,19 @@ export default function AdminBookings() {
 
       // IMPORTANT:
       // Use an alias so Supabase returns a single object (not an array)
-      const { data, error } = await supabase
-        .from("bookings")
-        .select(
-          `
-          id, created_at, status,
-          service_id, meta,
-          start_at, end_at,
-          customer_name, customer_email, customer_phone,
-          vehicle, notes,
-          service:services(title)
-        `
-        )
-        .order("created_at", { ascending: false })
-        .limit(200);
-
-      if (error) setStatus(error.message);
-      else {
-        const next = (data ?? []) as unknown as BookingRow[];
+      try {
+        const next = await listBookings();
         setRows(next);
         setQuotedById(() => {
           const m: Record<string, string> = {};
           for (const b of next) {
-            const cents = (b as any)?.meta?.quoted_price_cents;
+            const cents = (b as { meta?: { quoted_price_cents?: number } })?.meta?.quoted_price_cents;
             m[b.id] = typeof cents === "number" && Number.isFinite(cents) ? String((cents / 100).toFixed(2)) : "";
           }
           return m;
         });
+      } catch (e) {
+        setStatus(e instanceof Error ? e.message : "Failed to load bookings.");
       }
     })();
   }, []);
@@ -67,15 +53,13 @@ export default function AdminBookings() {
 
     setBusyId(id);
     setStatus(null);
-    const { error } = await supabase.from("bookings").delete().eq("id", id);
-    setBusyId(null);
-
-    if (error) {
-      setStatus(error.message);
-      return;
+    try {
+      await deleteBookingDoc(id);
+      setRows((prev) => prev.filter((x) => x.id !== id));
+    } catch (e) {
+      setStatus(e instanceof Error ? e.message : "Failed to delete.");
     }
-
-    setRows((prev) => prev.filter((x) => x.id !== id));
+    setBusyId(null);
   }
 
   async function saveQuotedPrice(b: BookingRow) {
@@ -89,15 +73,13 @@ export default function AdminBookings() {
     setStatus(null);
 
     const nextMeta = { ...(b.meta ?? {}), quoted_price_cents: cents };
-    const { error } = await supabase.from("bookings").update({ meta: nextMeta }).eq("id", b.id);
-
-    setBusyId(null);
-    if (error) {
-      setStatus(error.message);
-      return;
+    try {
+      await updateBookingMeta(b.id, nextMeta);
+      setRows((prev) => prev.map((x) => (x.id === b.id ? ({ ...x, meta: nextMeta } as BookingRow) : x)));
+    } catch (e) {
+      setStatus(e instanceof Error ? e.message : "Failed to save.");
     }
-
-    setRows((prev) => prev.map((x) => (x.id === b.id ? ({ ...x, meta: nextMeta } as BookingRow) : x)));
+    setBusyId(null);
   }
 
   function taxModeFor(b: BookingRow) {

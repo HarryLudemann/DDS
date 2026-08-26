@@ -3,58 +3,240 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Global sanity */
 *, *::before, *::after { box-sizing: border-box; }
-html { scroll-behavior: smooth; scrollbar-gutter: stable; }
-html, body { width: 100%; max-width: 100%; overflow-x: hidden !important; touch-action: pan-y; overscroll-behavior-x: none; }
-img, svg, video, canvas { max-width: 100%; height: auto; display: block; }
-pre, code { max-width: 100%; overflow-x: auto; }
+html { scrollbar-gutter: stable; }
+html, body { width: 100%; max-width: 100%; }
+img, svg, video, canvas { max-width: 100%; display: block; }
 
 @media (pointer: fine) {
   html { overflow-y: scroll; }
 }
 
-body{
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-  -webkit-font-smoothing: antialiased;
+body {
   margin: 0;
-  background: #f7f7f8;
-  color: #0f172a;
+  font-family: Outfit, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: #f2f1ee;
+  color: #161616;
 }
 
 html, body, #root {
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden !important;
 }
 
-#root { 
-  position: relative; 
-  touch-action: pan-y; 
-}
+#root { position: relative; }
 
-body {
-  overscroll-behavior-x: none;
-}
-
-@supports (overflow: clip) {
-  html, body { overflow-x: clip !important; }
-  html, body, #root { overflow-x: clip !important; }
-}
-
-/* Link styling - remove underlines, add smooth transitions */
 a {
   text-decoration: none;
   color: inherit;
-  transition: color 0.2s ease;
 }
 
-a:hover {
-  text-decoration: none;
+/* Public site — scoped so admin chrome stays as-is */
+.site {
+  --site-bg: #f2f1ee;
+  --site-paper: #ffffff;
+  --site-ink: #161616;
+  --site-muted: #6d6c67;
+  --site-line: rgba(22, 22, 22, 0.1);
+  --site-accent: #161616;
+  --site-accent-ink: #161616;
+  --site-fun: #ecebe7;
+  background: var(--site-bg);
+  color: var(--site-ink);
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
-/* Ensure Link components from react-router-dom don't have underlines */
-a[href], 
-[role="link"] {
-  text-decoration: none;
+@layer base {
+  .site button {
+    appearance: none;
+    -webkit-appearance: none;
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+  }
+}
+
+.site p,
+.site li,
+.site h1,
+.site h2 {
+  overflow-wrap: break-word;
+}
+
+.site img.fill,
+.site .site-photo-img {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+}
+
+.site .font-display {
+  font-family: Outfit, ui-sans-serif, system-ui, sans-serif;
+  font-weight: 300;
+  letter-spacing: -0.04em;
+}
+
+.site-chip {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--site-muted);
+}
+
+.site-chip-on-dark {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+html.site-menu-open {
+  overflow: hidden;
+}
+
+html.site-menu-open .site-cookie {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.site-skip {
+  position: absolute;
+  left: 1rem;
+  top: -40px;
+  z-index: 80;
+  background: #fff;
+  color: #111;
+  padding: 0.5rem 1rem;
+}
+
+.site-skip:focus {
+  top: 1rem;
+}
+
+html.site-cookie-open .site footer {
+  padding-bottom: 6.5rem;
+}
+
+.site-reveal {
+  animation: site-fade-up 700ms ease both;
+}
+
+@keyframes site-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  .site-reveal {
+    animation: none;
+  }
+
+  .site img {
+    transition: none !important;
+  }
+}
+
+.admin {
+  --admin-bg: #f2f1ee;
+  --admin-paper: #ffffff;
+  --admin-ink: #161616;
+  --admin-muted: #6d6c67;
+  --admin-line: rgba(22, 22, 22, 0.12);
+  min-height: 100svh;
+  background: var(--admin-bg);
+  color: var(--admin-ink);
+  font-family: Outfit, ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.admin input,
+.admin textarea,
+.admin select {
+  font-family: inherit;
+  color: inherit;
+}
+
+.admin-field {
+  width: 100%;
+  min-height: 2.75rem;
+  border: 1px solid var(--admin-line);
+  background: #fff;
+  border-radius: 2px;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  outline: none;
+  transition: border-color 160ms ease;
+  box-shadow: none;
+}
+
+.admin-field:hover {
+  border-color: rgba(22, 22, 22, 0.28);
+}
+
+.admin-field:focus,
+.admin-field:focus-visible {
+  border-color: var(--admin-ink);
+  box-shadow: none;
+  outline: none;
+}
+
+.admin-field:disabled {
+  opacity: 0.45;
+  background: #f7f6f3;
+}
+
+.admin-field::placeholder {
+  color: #9a9892;
+}
+
+.admin textarea.admin-field {
+  min-height: 8rem;
+  resize: vertical;
+}
+
+.admin input[type="time"].admin-field {
+  min-height: 2.75rem;
+  color-scheme: light;
+}
+
+.admin input[type="checkbox"] {
+  accent-color: #161616;
+  width: 1rem;
+  height: 1rem;
+}
+
+.admin input:-webkit-autofill,
+.admin input:-webkit-autofill:hover,
+.admin input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #fff inset;
+  -webkit-text-fill-color: #161616;
+  caret-color: #161616;
+  transition: background-color 9999s ease-out;
 }
