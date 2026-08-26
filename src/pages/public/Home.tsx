@@ -126,7 +126,7 @@ export default function Home() {
           <SectionHeading
             eyebrow="Work"
             title="What leaves the studio."
-            body="Paint, interior, glass and trim — the parts of the car people actually notice."
+            body="Paint, cabin, and glass — the parts of the car people actually notice."
           />
           <div className="mt-16 grid gap-5 md:grid-cols-3 md:gap-8">
             {GALLERY.map((img, i) => (

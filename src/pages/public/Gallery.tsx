@@ -14,7 +14,7 @@ export default function Gallery() {
         <SectionHeading
           eyebrow="Gallery"
           title="What leaves the studio."
-          body="Paint, interior, and glass after a studio detail. Book the package that matches the work you want."
+          body="Paint, cabin, and glass — the surfaces people actually notice. Book the package that matches the work you want."
         />
         <div className="mt-16 grid gap-10 md:grid-cols-2 md:gap-8">
           {GALLERY.map((img, i) => (

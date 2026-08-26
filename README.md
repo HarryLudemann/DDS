@@ -245,7 +245,7 @@ Canonical host is `SITE.baseUrl` (`https://dds.harryludemann.com`). JSON-LD for 
 - **Hours vs booking:** closed days and start/end times in admin are what customers can book. If slots look empty, check hours and that Firebase keys are present.
 - **Seed is one-shot:** “Load default catalogue” skips if any `services` document exists.
 - **Windows + Firebase CLI:** use `npx firebase-tools`, not a bare `firebase`, unless it is on PATH.
-- **Photos:** `public/images/*.webp` were added without a licence or EXIF. Treat them as **not cleared** for “our work” until you replace them with studio shots or licensed stock. Favicons and the Outfit font are fine.
+- **Photos:** `public/images/*.webp` and `og.jpg` are licensed stock (Unsplash / Pexels — sources in `src/lib/site/media.ts`). They are **not** studio shots of DDS work. Swap them for Dylan’s photos when you have them. Favicons and the Outfit font are fine.
 - **Cookie banner:** first-party only (consent flag). Copy must stay “no ads, no tracking.”
 
 ---

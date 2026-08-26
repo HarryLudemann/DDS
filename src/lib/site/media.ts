@@ -2,32 +2,44 @@ export type SiteImage = {
   src: string;
   alt: string;
   caption: string;
-  /** Used when the frame is wider than the photo, so dark paint shots keep the cloth/hand in view. */
+  /** Crop anchor for object-fit: cover. */
   objectPosition: string;
+};
+
+/**
+ * Licensed stock — not studio photography.
+ * Hero: Unsplash / Avenir Visuals (https://unsplash.com/photos/9U-_m0dfNuw)
+ * Paint: Pexels 6872149
+ * Interior: Unsplash (https://unsplash.com/photos/fY73npw7c_w)
+ * Glass: Unsplash (https://unsplash.com/photos/ydYotkM_wj0)
+ */
+export const HERO_IMAGE: SiteImage = {
+  src: "/images/hero.webp",
+  alt: "",
+  caption: "",
+  objectPosition: "52% 48%",
 };
 
 export const GALLERY: SiteImage[] = [
   {
     src: "/images/paint.webp",
-    alt: "Exterior paint after a studio detail",
+    alt: "Soap foam on glossy black paint and a round headlight",
     caption: "Paint",
-    objectPosition: "50% 28%",
+    objectPosition: "28% 42%",
   },
   {
     src: "/images/interior.webp",
-    alt: "Interior after a studio detail",
+    alt: "Perforated leather seat with contrast stitching",
     caption: "Interior",
-    objectPosition: "50% 45%",
+    objectPosition: "48% 38%",
   },
   {
     src: "/images/glass.webp",
-    alt: "Glass and trim after a studio detail",
-    caption: "Glass + trim",
-    objectPosition: "70% 50%",
+    alt: "Rain beading on a windshield",
+    caption: "Glass",
+    objectPosition: "50% 22%",
   },
 ];
-
-export const HERO_IMAGE: SiteImage = GALLERY[0]!;
 
 const PAINT: SiteImage = GALLERY[0]!;
 const INTERIOR: SiteImage = GALLERY[1]!;
