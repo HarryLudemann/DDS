@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import type { InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from "react";
 import { cn } from "../../../lib/site/cn";
 
 const fieldClass =
@@ -36,10 +36,6 @@ export function Field({
 
 export function SiteInput({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={cn(fieldClass, className)} {...props} />;
-}
-
-export function SiteSelect({ className, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select className={cn(fieldClass, className)} {...props} />;
 }
 
 export function SiteTextarea({ className, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {

@@ -9,11 +9,6 @@ let cachedRules: AvailabilityRule[] | null = null;
 let cachedAtMs = 0;
 const CACHE_TTL_MS = 60_000;
 
-export function invalidateHoursCache() {
-  cachedRules = null;
-  cachedAtMs = 0;
-}
-
 export function useHours() {
   const [rules, setRules] = useState<AvailabilityRule[]>(() => cachedRules ?? []);
   const [loading, setLoading] = useState(() => isFirebaseConfigured && cachedRules == null);

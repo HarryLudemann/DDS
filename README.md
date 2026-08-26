@@ -23,7 +23,6 @@ Customers book a drop-off online. **No payment is taken on the site.** Prices ar
 9. [SEO and sharing](#seo-and-sharing)
 10. [Gotchas](#gotchas)
 11. [Do not](#do-not)
-12. [Legacy files](#legacy-files)
 
 ---
 
@@ -85,14 +84,12 @@ Copy [`.env.example`](.env.example) to `.env`. **Never commit `.env`.** Keys are
 | `VITE_FIREBASE_APP_ID` | Yes | Web app id |
 | `VITE_FIREBASE_STORAGE_BUCKET` | No* | From the SDK snippet |
 | `VITE_FIREBASE_MESSAGING_SENDER_ID` | No* | From the SDK snippet |
-| `VITE_FIREBASE_DATABASE_URL` | No | Realtime Database is unused; rules deny all |
-| `VITE_FIREBASE_MEASUREMENT_ID` | No | Analytics only if you enable it |
 
 \*Include them so the client matches the console snippet. The app treats Firebase as configured when **apiKey, projectId, and appId** are set (`src/utils/firebase.ts`).
 
 Without keys, the public catalogue falls back to `src/catalog/packages.ts` and booking availability will not load.
 
-Vite inlines these at **build** time. Production Hosting only gets the keys that were in `.env` when you ran `npm run build` / `npm run deploy`.
+Vite inlines these at **build** time. Production Hosting only gets the keys that were in `.env` when you ran `npm run build` / `npm run deploy`. The site does not load Firebase Analytics.
 
 ---
 
@@ -125,10 +122,10 @@ src/components/site/    Public layout, cards, fields
 src/lib/firebase/       Firestore reads/writes (`store.ts`)
 src/lib/site/           Hours, booking slots, SEO, JSON-LD, live cache invalidation
 src/catalog/packages.ts Fallback + seed catalogue
-src/hooks/              Services, hours, session, admin
-src/utils/firebase.ts   Firebase init
+src/hooks/              Live services and hours
+src/utils/firebase.ts   Firebase Auth + Firestore init
 firestore.rules         Who can read/write what
-firebase.json           Hosting + rules wiring
+firebase.json           Hosting SPA rewrite + rules wiring
 vite.seo.ts             Writes dist/{path}/index.html for link crawlers
 ```
 
@@ -220,7 +217,9 @@ npx firebase-tools deploy --only hosting,firestore,database --project dylans-det
 
 `npm run deploy` does the same if the `firebase` binary is installed globally.
 
-Hosting serves `dist/`. `firebase.json` rewrites every path to `/index.html` so React Router works. Deploying **firestore** publishes `firestore.rules`. Deploying **database** publishes the deny-all RTDB rules.
+Hosting serves `dist/`. `firebase.json` rewrites every path to `/index.html` so React Router works. If you ever leave Firebase Hosting, the same rule is `try_files $uri $uri/ /index.html;` (Nginx) or a Netlify `/* → /index.html 200` redirect.
+
+Deploying **firestore** publishes `firestore.rules`. Deploying **database** publishes deny-all Realtime Database rules (the app does not use RTDB).
 
 Confirm after deploy:
 
@@ -258,20 +257,4 @@ Canonical host is `SITE.baseUrl` (`https://dds.harryludemann.com`). JSON-LD for 
 - Commit `.env`, service-account JSON, or Firebase CI tokens.
 - Market the public site as first-name “Dylan” — legal name stays in `SITE.name`; wordmark and UI are **DDS**.
 - Weaken `firestore.rules` so bookings or profiles are world-writable.
-- Point the app at a second Firebase or Supabase project “just for staging” without documenting it here.
-
----
-
-## Legacy files
-
-These are leftover from earlier iterations. **Do not use them as the source of truth.**
-
-| Path | Why it is still here |
-| --- | --- |
-| `src/utils/supabase.ts` | Unused. Backend is Firebase. |
-| `src/pages/admin/AdminHome.tsx` | Old dashboard. Live admin is `AdminWorkspace`. |
-| `src/components/layout/Shell.tsx` | Old chrome. Public shell is `SiteShell`. |
-| `public/_redirects` | Netlify leftover. Hosting uses `firebase.json`. |
-| `docs/PROJECT_ANALYSIS.md` | Snapshot from before the Firebase rebuild. |
-
-SPA hosting notes (Firebase, plus Apache/Nginx if you ever leave Hosting) are in [`SERVER_CONFIG.md`](SERVER_CONFIG.md).
+- Point the app at a second Firebase project “just for staging” without documenting it here.

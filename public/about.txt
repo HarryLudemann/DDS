@@ -1,6 +1,0 @@
-This favicon was generated using the following font:
-
-- Font Title: Work Sans
-- Font Author: undefined
-- Font Source: https://fonts.gstatic.com/s/worksans/v23/QGY_z_wNahGAdqQ43RhVcIgYT2Xz5u32K-DQNigDp6_cOyA.ttf
-- Font License: undefined)

@@ -97,8 +97,3 @@ export const PACKAGES: Package[] = [
     idealFor: ["Parking outside", "Coastal commuters", "Keep it easy to wash"],
   },
 ];
-
-export function getPackageByCode(code: string | null | undefined): Package | null {
-  if (!code) return null;
-  return PACKAGES.find((p) => p.code === code) ?? null;
-}
