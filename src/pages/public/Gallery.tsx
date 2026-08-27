@@ -13,8 +13,8 @@ export default function Gallery() {
       <Container className="py-16 sm:py-24">
         <SectionHeading
           eyebrow="Gallery"
-          title="What leaves the studio."
-          body="Paint, cabin, and glass — the surfaces people actually notice. Book the package that matches the work you want."
+          title="Recent work"
+          body="Paint, interior, and glass — the surfaces people actually notice. Book the package that matches the work you want."
         />
         <div className="mt-16 grid gap-10 md:grid-cols-2 md:gap-8">
           {GALLERY.map((img, i) => (

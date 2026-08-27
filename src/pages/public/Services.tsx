@@ -14,7 +14,7 @@ export default function Services() {
       <Container className="py-16 sm:py-24">
         <SectionHeading
           eyebrow="Packages"
-          title="The work, itemised."
+          title="Packages and starting prices"
           body="Starting prices include GST and move with vehicle size and condition. If the car needs more, we confirm before work starts."
         />
 

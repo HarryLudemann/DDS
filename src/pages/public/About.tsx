@@ -49,19 +49,19 @@ export default function About() {
       <Container className="py-16 sm:py-24">
         <SectionHeading
           eyebrow="The studio"
-          title="A detailing studio, not a driveway."
-          body={`${SITE.shortName} is studio drop-off detailing in ${SITE.city}. Listed packages, controlled conditions, and a confirmed time — not a quote chase.`}
+          title="A studio, not a driveway"
+          body={`${SITE.shortName} is drop-off detailing in ${SITE.city}. Packages, prices, and a confirmed time are listed before you book.`}
         />
 
         <div className="mt-16 max-w-xl space-y-6 text-[15px] leading-[1.75] text-[var(--site-muted)]">
           <p>
-            The work is specified before you book: what is included, how long it typically takes, and a starting price. Final pricing can change for larger vehicles or heavy soiling. If anything needs an inspection-based quote, you are contacted first.
+            What’s included is listed before you book: the work, how long it typically takes, and a starting price. Final pricing can change for larger vehicles or heavy soiling. If anything needs a look at the car first, you’re contacted before work starts.
           </p>
           <p>
             There is no mobile service. Drop-off keeps lighting, process, and finishing consistent, and keeps the weather out of the job.
           </p>
           <p>
-            No payment is taken on this site. After a booking request, we confirm the drop-off time and the details of the work.
+            You don’t pay on this site. After a booking request, we confirm the drop-off time and the details of the work.
           </p>
         </div>
 

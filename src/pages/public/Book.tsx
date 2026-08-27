@@ -420,7 +420,7 @@ export default function Book() {
         <p className="site-chip">Booking</p>
         <h1 className="mt-5 font-display text-4xl leading-[1.05] sm:text-5xl">Reserve a drop-off</h1>
         <p className="mt-3 max-w-xl text-pretty text-sm leading-relaxed text-[var(--site-muted)] sm:text-base">
-          Four short steps. No payment online — we confirm the time after the request.
+          Four short steps. You don’t pay on this site — we confirm the time after the request.
         </p>
 
         {!isFirebaseConfigured && (
@@ -654,7 +654,7 @@ export default function Book() {
                 <TextAction
                   onClick={() => detailsReady && goTo(4)}
                   disabled={!detailsReady}
-                  hint={detailsReady ? "Check everything, then send. No payment online." : "Name and email are required."}
+                  hint={detailsReady ? "Check everything, then send. You don’t pay on this site." : "Name and email are required."}
                 >
                   Continue to review
                 </TextAction>

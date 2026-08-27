@@ -9,7 +9,7 @@ export const OG_IMAGE_ALT = "DDS — studio car detailing in Wellington";
 export const DEFAULT_TITLE = "DDS | Studio Detailing in Wellington";
 export const DEFAULT_SHARE_TITLE = "DDS — Studio car detailing in Wellington";
 export const DEFAULT_DESCRIPTION =
-  "Studio drop-off car detailing in Wellington. Specified packages, GST-inclusive starting prices, and a confirmed booking. No payment online.";
+  "Studio drop-off car detailing in Wellington. Listed packages, GST-inclusive starting prices, and a confirmed booking. You don’t pay on this site.";
 
 export type SeoPage = {
   path: string;
@@ -42,7 +42,7 @@ export const SEO_PAGES: SeoPage[] = [
   {
     path: "/gallery",
     title: "Gallery",
-    shareTitle: "The finish | DDS Wellington",
+    shareTitle: "Gallery | DDS Wellington",
     description: "Paint, interior, and glass after a studio detail at DDS in Wellington.",
   },
   {
@@ -50,12 +50,12 @@ export const SEO_PAGES: SeoPage[] = [
     title: "The studio",
     shareTitle: "The studio | DDS Wellington",
     description:
-      "DDS is studio drop-off detailing in Wellington. Specified packages, controlled conditions, and a confirmed time — not a quote chase.",
+      "DDS is studio drop-off detailing in Wellington. Listed packages, indoor conditions, and a confirmed drop-off time.",
   },
   {
     path: "/contact",
     title: "Contact",
-    shareTitle: "Unsure? Book anyway | DDS Wellington",
+    shareTitle: "Contact | DDS Wellington",
     description:
       "Not sure which package you need? Book a drop-off with DDS in Wellington and we’ll contact you to confirm the work and the time.",
   },

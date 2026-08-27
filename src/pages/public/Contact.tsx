@@ -12,8 +12,8 @@ export default function Contact() {
       <Container className="py-16 sm:py-24">
         <SectionHeading
           eyebrow="Contact"
-          title="Unsure? Book anyway."
-          body="The booking form is how we hear from you. If you’re not sure which package, how long it will take, or what the car needs — send a request. We’ll contact you to confirm the work, the time, and the details."
+          title="Not sure which package?"
+          body="The booking form is how we hear from you. If you’re not sure which package, how long it will take, or what the car needs — send a request. We’ll get back to you to confirm the work, the time, and the details."
         />
 
         <div className="mt-10 max-w-lg space-y-4 text-[15px] leading-[1.7] text-[var(--site-muted)]">

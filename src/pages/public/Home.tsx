@@ -14,20 +14,20 @@ import { ServiceCard } from "../../components/site/services/ServiceCard";
 
 const WHY = [
   {
-    title: "Specified work",
-    body: "Each package lists inclusions and a starting price before you book. You know the job, not a vague “detail”.",
+    title: "What's included",
+    body: "Each package lists inclusions and a starting price before you book, so you’re not guessing what “a detail” covers.",
   },
   {
-    title: "Studio conditions",
+    title: "Indoor, not mobile",
     body: "Drop-off only. Controlled light and process — not a driveway, not the weather, not a rushed mobile stop.",
   },
   {
-    title: "A confirmed slot",
-    body: "Pick a day and a window. We confirm the exact drop-off time after the request. No payment is taken online.",
+    title: "A confirmed time",
+    body: "Pick a day and a window. We confirm the exact drop-off time after the request. You don’t pay on this site.",
   },
   {
-    title: "Finish that holds",
-    body: "The work is aimed at how the car looks and feels on handover — paint, cabin, glass — then a final pass.",
+    title: "A proper finish",
+    body: "The aim is how the car looks and feels when you pick it up — paint, cabin, and glass — then a final check.",
   },
 ];
 
@@ -56,10 +56,10 @@ export default function Home() {
             {SITE.city} · {SITE.format}
           </p>
           <h1 className="mt-5 max-w-[12ch] font-display text-[3.25rem] leading-[0.94] sm:text-6xl lg:text-[4.85rem]">
-            The finish, specified.
+            Studio car detailing
           </h1>
           <p className="mt-6 max-w-md text-[15px] leading-[1.7] text-white/80 sm:text-base">
-            Studio detailing in Wellington. Choose a package, book a drop-off window, and we confirm the slot. Starting prices listed. No checkout online.
+            Choose a package, pick a drop-off window, and we’ll confirm the time. Starting prices include GST. You don’t pay on this site.
           </p>
           <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-8">
             <SiteButtonLink to="/book" variant="inverse" size="lg">
@@ -76,7 +76,7 @@ export default function Home() {
         <Container>
           <SectionHeading
             eyebrow="Packages"
-            title="Book the work, not a quote chase."
+            title="Packages with starting prices"
             body="Starting prices include GST and vary by vehicle size and condition. If the car needs more, we confirm before work starts."
           />
 
@@ -104,8 +104,8 @@ export default function Home() {
         <Container>
           <SectionHeading
             eyebrow="Why the studio"
-            title="Consistent work, on the books."
-            body="A controlled setup, listed inclusions, and a confirmed drop-off — built to convert a booking, not a conversation."
+            title="Why it’s drop-off only"
+            body="Indoor lighting, listed inclusions, and a confirmed drop-off time — so you know what you’re booking."
           />
           <div className="mt-20 grid gap-x-16 gap-y-14 sm:grid-cols-2">
             {WHY.map((item, i) => (
@@ -125,8 +125,8 @@ export default function Home() {
         <Container>
           <SectionHeading
             eyebrow="Work"
-            title="What leaves the studio."
-            body="Paint, cabin, and glass — the parts of the car people actually notice."
+            title="Paint, interior, and glass"
+            body="The parts of the car people actually notice."
           />
           <div className="mt-16 grid gap-5 md:grid-cols-3 md:gap-8">
             {GALLERY.map((img, i) => (
@@ -154,10 +154,10 @@ export default function Home() {
           <Reveal>
             <p className="site-chip site-chip-on-dark">Book</p>
             <h2 className="mt-5 max-w-[14ch] font-display text-4xl leading-[1.05] sm:text-6xl">
-              Put it in the diary.
+              Request a drop-off
             </h2>
             <p className="mt-6 max-w-md text-[15px] leading-[1.7] text-white/70">
-              Choose a package and a drop-off window. We confirm the exact time. No payment is taken on this site.
+              Choose a package and a drop-off window. We’ll confirm the exact time. You don’t pay on this site.
             </p>
             <div className="mt-10">
               <SiteButtonLink to="/book" variant="inverse" size="lg">
