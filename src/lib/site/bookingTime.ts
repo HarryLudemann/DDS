@@ -74,26 +74,35 @@ export function isPlausiblePlate(raw: string) {
   return plate.length >= 2 && plate.length <= 8;
 }
 
-export function labelForDateKeyNZ(dateKey: string) {
+function partsForDateKeyNZ(dateKey: string) {
   const [y, m, d] = dateKey.split("-").map(Number);
   const dateForFormatting = new Date(Date.UTC(y, (m ?? 1) - 1, d ?? 1, 0, 0, 0));
 
-  const day = new Intl.DateTimeFormat("en-NZ", {
+  const weekday = new Intl.DateTimeFormat("en-NZ", {
     timeZone: NZ_TZ,
     weekday: "short",
   }).format(dateForFormatting);
 
   const rest = new Intl.DateTimeFormat("en-NZ", {
     timeZone: NZ_TZ,
-    day: "2-digit",
+    day: "numeric",
     month: "short",
   }).format(dateForFormatting);
 
   const nowKey = todayNZDateKey();
   const tomorrowKey = tomorrowNZDateKey();
-  const tag = dateKey === nowKey ? "Today" : dateKey === tomorrowKey ? "Tomorrow" : "";
+  if (dateKey === nowKey) return { kicker: "Today", line: `${weekday} ${rest}` };
+  if (dateKey === tomorrowKey) return { kicker: "Tomorrow", line: `${weekday} ${rest}` };
+  return { kicker: weekday, line: rest };
+}
 
-  return tag ? `${tag} · ${day} ${rest}` : `${day} ${rest}`;
+export function labelForDateKeyNZ(dateKey: string) {
+  const { kicker, line } = partsForDateKeyNZ(dateKey);
+  return kicker === "Today" || kicker === "Tomorrow" ? `${kicker} · ${line}` : `${kicker} ${line}`;
+}
+
+export function dateChipParts(dateKey: string) {
+  return partsForDateKeyNZ(dateKey);
 }
 
 export function groupStartsByDay(times: string[]) {

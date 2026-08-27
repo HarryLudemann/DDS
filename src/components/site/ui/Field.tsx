@@ -2,7 +2,7 @@ import type { InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from "rea
 import { cn } from "../../../lib/site/cn";
 
 const fieldClass =
-  "w-full rounded-none border border-[var(--site-line)] bg-transparent px-3.5 py-3 text-sm text-[var(--site-ink)] outline-none transition-colors placeholder:text-[var(--site-muted)]/70 focus:border-[var(--site-ink)]";
+  "w-full rounded-none border border-[var(--site-line)] bg-transparent px-3.5 py-3 text-base text-[var(--site-ink)] outline-none transition-colors placeholder:text-[var(--site-muted)]/70 focus:border-[var(--site-ink)] sm:text-sm";
 
 export function Field({
   label,

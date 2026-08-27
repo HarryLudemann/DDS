@@ -135,6 +135,44 @@ html.site-cookie-open .site footer {
   padding-bottom: 6.5rem;
 }
 
+.site-date-rail {
+  display: flex;
+  gap: 0.5rem;
+  width: calc(100% + 2.5rem);
+  max-width: none;
+  margin-inline: -1.25rem;
+  padding-inline: 1.25rem;
+  padding-bottom: 0.65rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+
+.site-date-rail::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .site-date-rail {
+    width: calc(100% + 4rem);
+    margin-inline: -2rem;
+    padding-inline: 2rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .site-date-rail {
+    width: 100%;
+    margin-inline: 0;
+    padding-inline: 0;
+    flex-wrap: wrap;
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+}
+
 .site-reveal {
   animation: site-fade-up 700ms ease both;
 }

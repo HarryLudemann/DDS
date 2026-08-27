@@ -100,7 +100,7 @@ export function SiteHeader() {
     <>
       <header
         className={cn(
-          "fixed inset-x-0 top-0 z-[100]",
+          "fixed inset-x-0 top-0 z-[100] pt-[env(safe-area-inset-top)]",
           overHero
             ? "text-white"
             : "border-b border-[var(--site-line)] bg-[var(--site-bg)] text-[var(--site-ink)]"
@@ -180,7 +180,7 @@ export function SiteHeader() {
             aria-label="Menu"
           >
             <nav
-              className="flex flex-1 flex-col justify-center px-5 pb-16 pt-24 sm:px-8"
+              className="flex flex-1 flex-col justify-center px-5 pb-16 pt-[calc(6rem+env(safe-area-inset-top))] sm:px-8"
               aria-label="Mobile"
             >
               {NAV.map((item) => (

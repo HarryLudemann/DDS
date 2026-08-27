@@ -11,6 +11,7 @@ import { fetchAvailableStarts } from "../../lib/site/availability";
 import {
   BOOKING_WINDOWS,
   addMinutesIso,
+  dateChipParts,
   groupStartsByDay,
   isPlausiblePlate,
   isValidEmail,
@@ -45,6 +46,7 @@ function Choice({
   children,
   dataDay,
   className,
+  stretch = true,
 }: {
   selected: boolean;
   disabled?: boolean;
@@ -52,6 +54,7 @@ function Choice({
   children: ReactNode;
   dataDay?: string;
   className?: string;
+  stretch?: boolean;
 }) {
   return (
     <button
@@ -61,7 +64,8 @@ function Choice({
       data-day={dataDay}
       aria-pressed={selected}
       className={cn(
-        "w-full min-w-0 border px-4 py-3.5 text-left text-sm transition-colors",
+        "min-w-0 border px-4 py-3.5 text-left text-sm transition-colors touch-manipulation",
+        stretch && "w-full",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--site-ink)]",
         selected
           ? "border-[var(--site-ink)] bg-transparent"
@@ -277,9 +281,12 @@ export default function Book() {
       : (timesForSelectedWindow[0] ?? "");
 
   useEffect(() => {
-    if (!dateRailRef.current || !effectiveDay) return;
-    const btn = dateRailRef.current.querySelector<HTMLButtonElement>(`button[data-day='${effectiveDay}']`);
-    btn?.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+    const rail = dateRailRef.current;
+    if (!rail || !effectiveDay) return;
+    const btn = rail.querySelector<HTMLButtonElement>(`button[data-day='${CSS.escape(effectiveDay)}']`);
+    if (!btn) return;
+    const left = btn.offsetLeft - (rail.clientWidth - btn.offsetWidth) / 2;
+    rail.scrollTo({ left: Math.max(0, left), behavior: "smooth" });
   }, [effectiveDay]);
 
   useEffect(() => {
@@ -409,7 +416,7 @@ export default function Book() {
     <>
       <SiteSeo path="/book" />
 
-      <Container className="overflow-x-hidden pb-20 pt-10 sm:pt-14 md:pb-24">
+      <Container className="pb-20 pt-10 sm:pt-14 md:pb-24">
         <p className="site-chip">Booking</p>
         <h1 className="mt-5 font-display text-4xl leading-[1.05] sm:text-5xl">Reserve a drop-off</h1>
         <p className="mt-3 max-w-xl text-pretty text-sm leading-relaxed text-[var(--site-muted)] sm:text-base">
@@ -426,7 +433,7 @@ export default function Book() {
         <BookingSteps step={step} onBackTo={(n) => n < step && goTo(n)} onBack={step > 1 ? goBack : undefined} />
 
         <div className="mt-10 grid min-w-0 gap-10 lg:grid-cols-[minmax(0,1fr)_280px]">
-          <div>
+          <div className="min-w-0">
             {step === 1 && (
               <section aria-labelledby="step-service">
                 <h2 id="step-service" className="font-display text-2xl">
@@ -484,24 +491,31 @@ export default function Book() {
                   <>
                     <div
                       ref={dateRailRef}
-                      className="mt-6 flex gap-2 overflow-x-auto pb-2 md:flex-wrap md:overflow-visible"
+                      className="site-date-rail mt-6"
                     >
-                      {grouped.map((g) => (
-                        <Choice
-                          key={g.dateKey}
-                          selected={g.dateKey === effectiveDay}
-                          dataDay={g.dateKey}
-                          className="w-auto min-w-[8.75rem] shrink-0"
-                          onClick={() => pickDay(g.dateKey)}
-                        >
-                          {g.label}
-                        </Choice>
-                      ))}
+                      {grouped.map((g) => {
+                        const chip = dateChipParts(g.dateKey);
+                        return (
+                          <Choice
+                            key={g.dateKey}
+                            selected={g.dateKey === effectiveDay}
+                            dataDay={g.dateKey}
+                            stretch={false}
+                            className="w-[6.75rem] shrink-0 snap-start px-3 py-3 text-center"
+                            onClick={() => pickDay(g.dateKey)}
+                          >
+                            <span className="block text-[13px] font-medium leading-tight">{chip.kicker}</span>
+                            <span className="mt-1 block text-[11px] leading-tight text-[var(--site-muted)]">
+                              {chip.line}
+                            </span>
+                          </Choice>
+                        );
+                      })}
                     </div>
 
                     {showExactTimes ? (
                       <div className="mt-8">
-                        <div className="flex items-center justify-between gap-3">
+                        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
                           <h3 className="text-sm font-medium">Exact time</h3>
                           <button
                             type="button"
@@ -520,7 +534,7 @@ export default function Book() {
                             <Choice
                               key={t}
                               selected={t === startAt}
-                              className="text-center"
+                              className="px-2 py-3 text-center tabular-nums"
                               onClick={() => pickExactTime(t)}
                             >
                               {fmtTimeNZ(t)}

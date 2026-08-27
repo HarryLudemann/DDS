@@ -19,7 +19,7 @@ export function SiteShell() {
         Skip to content
       </a>
       <SiteHeader />
-      <main id="main" className={cn("flex-1", !isHome && "pt-16 sm:pt-[4.5rem] lg:pt-20")}>
+      <main id="main" className={cn("flex-1", !isHome && "pt-[calc(4rem+env(safe-area-inset-top))] sm:pt-[calc(4.5rem+env(safe-area-inset-top))] lg:pt-[calc(5rem+env(safe-area-inset-top))]")}>
         <Outlet />
       </main>
       <SiteFooter />
